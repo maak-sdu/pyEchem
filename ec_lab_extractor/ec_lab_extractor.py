@@ -162,11 +162,11 @@ def main():
     if not comma_to_dot_path.exists():
         comma_to_dot_path.mkdir()
     comma_to_dot(txt_files, comma_to_dot_path)
-    output_path = Path.cwd() / "ec_lab_extracted"
-    if not output_path.exists():
-        output_path.mkdir()
+    txt_path = Path.cwd() / "txt"
+    if not txt_path.exists():
+        txt_path.mkdir()
     txt_files_dotted = comma_to_dot_path.glob("*.txt")
-    ec_lab_extractor(txt_files_dotted, output_path)
+    ec_lab_extractor(txt_files_dotted, txt_path)
 
     return None
 

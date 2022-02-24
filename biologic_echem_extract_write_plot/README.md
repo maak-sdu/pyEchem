@@ -1,4 +1,4 @@
-# EC-Lab extractor
+# biologic_echem_extract_write_plot
 This code will extract desired columns from exported .txt files from the EC-lab
 software that comes with Biologic potentiostats used in the Ravnsbæk Group. The
 extracted columns will be written to two-column .txt files and plotted as .png

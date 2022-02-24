@@ -17,14 +17,16 @@ COLOR = COLORS['bg_blue']
 
 
 def comma_to_dot(txt_files, comma_to_dot_path):
-    print(f"{80*'-'}\nConverting comma to dots...")
+    print(f"{80*'-'}\nConverting commas to dots...")
     for file in txt_files:
+        print(f"\t{file.name}")
         with file.open() as f:
             txt = f.read().replace(",", ".")
         output_path_file = comma_to_dot_path / file.name
         with open(output_path_file, mode="w") as o:
             o.write(txt)
-    print(f"Done converting comma to dots.\nFiles saved to the 'data/comma_to_dot' folder.")
+    print(f"Done converting comma to dots.\nFiles saved to the "
+          f"'data/comma_to_dot' folder.")
 
     return None
 
@@ -139,7 +141,7 @@ def xy_plotter(x_values, y_values, x_desire_key, y_desire_key, rest_desire, file
         plt.savefig(f"png/{filename}_no-rest.pdf", bbox_inches="tight")
     else:
         plt.savefig(f"png/{filename}.png", bbox_inches="tight")
-        plt.savefig(f"png/{filename}.pdf", bbox_inches="tight")
+        plt.savefig(f"pdf/{filename}.pdf", bbox_inches="tight")
 
     return None
 
@@ -158,7 +160,7 @@ def main():
                 \nPlease place your .txt echem files in the 'data' folder.\
                 \n{80*'-'}")
         sys.exit()
-    comma_to_dot_path = data_path / "comma_to_dot"
+    comma_to_dot_path = Path.cwd() / "comma_to_dot"
     if not comma_to_dot_path.exists():
         comma_to_dot_path.mkdir()
     comma_to_dot(txt_files, comma_to_dot_path)
@@ -166,7 +168,11 @@ def main():
     if not txt_path.exists():
         txt_path.mkdir()
     txt_files_dotted = comma_to_dot_path.glob("*.txt")
+    print("Working with files...")
     ec_lab_extractor(txt_files_dotted, txt_path)
+    print(f"{80*'-'}\nDone working with files.\n{80*'-'}\nPlease see the 'txt' "
+          f"directory for two-column of files of the requested data.\nPlease "
+          f"see the 'pdf' and 'png' folders for plots.\n{80*'-'}")
 
     return None
 

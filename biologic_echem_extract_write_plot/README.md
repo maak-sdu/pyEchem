@@ -1,7 +1,8 @@
 # EC-Lab extractor
-This code can extract and plot desired columns exported from the EC-lab software
-to .txt files. EC-lab is the software that comes with Biologic potentiostats
-used in the Ravnsbæk Group.
+This code will extract desired columns from exported .txt files from the EC-lab
+software that comes with Biologic potentiostats used in the Ravnsbæk Group. The
+extracted columns will be written to two-column .txt files and plotted as .png
+and .pdf files.
 
 As EC-lab might export .txt files using comma as decimal separator, the code
 also converts commas to dots. From these files, columns desired by the user can

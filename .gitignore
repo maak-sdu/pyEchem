@@ -1,4 +1,10 @@
+# ec_lab_extractor
 ec_lab_extractor/example/data/comma_to_dot
 ec_lab_extractor/example/txt
 ec_lab_extractor/example/png
 ec_lab_extractor/example/pdf
+
+# maccor_echem_extract_write_plot
+maccor_echem_extract_write_plot/example/pdf
+maccor_echem_extract_write_plot/example/png
+maccor_echem_extract_write_plot/example/txt

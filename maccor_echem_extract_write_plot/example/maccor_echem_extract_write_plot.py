@@ -30,7 +30,7 @@ def maccor_echem_load(maccor_echem_file):
     with open(maccor_echem_file, 'r') as input_file:
         lines = input_file.readlines()
     for i,line in enumerate(lines):
-        if "Rec	Cycle P	Cycle C	Step	TestTime	StepTime" in line:
+        if "Rec" in line and "Cycle" in line and "Step"	in line:
             start = i + 3
     time_min_pre, time_min, time_s, time_h, voltage = [], [], [], [], []
     for i in range(start, len(lines)):

@@ -54,6 +54,11 @@ def maccor_echem_load(maccor_echem_file):
                 break
     time, voltage = [], []
     for i in range(start, len(lines)):
+        line_split = lines[i].split()
+        if not line_split[current_index] == 0:
+            start = i
+        break
+    for i in range(start, len(lines)):
         line_split = lines[i].replace(",", "").split()
         time.append(float(line_split[test_time_index]))
         voltage.append(float(line_split[voltage_index]))

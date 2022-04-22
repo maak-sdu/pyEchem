@@ -5,6 +5,9 @@ biologic_echem_extract_write_plot/example/pdf
 biologic_echem_extract_write_plot/example/txt
 
 # maccor_echem_extract_write_plot
-maccor_echem_extract_write_plot/example/pdf
-maccor_echem_extract_write_plot/example/png
-maccor_echem_extract_write_plot/example/txt
+maccor_echem_extract_write_plot/example/maccor_APS032018/pdf
+maccor_echem_extract_write_plot/example/maccor_APS032018/png
+maccor_echem_extract_write_plot/example/maccor_APS032018/txt
+maccor_echem_extract_write_plot/example/maccor_APS032019/pdf
+maccor_echem_extract_write_plot/example/maccor_APS032019/png
+maccor_echem_extract_write_plot/example/maccor_APS032019/txt

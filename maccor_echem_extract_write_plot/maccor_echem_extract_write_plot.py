@@ -5,20 +5,15 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 
-DPI = 300
+DPI = 600
 FIGSIZE = (12,4)
 LINEWIDTH = 1
 FONTSIZE_LABELS = 20
 FONTSIZE_TICKS = 16
-
-VOLTAGE_MIN = 1
-VOLTAGE_MAX = 3
-
 MAJOR_TIME_INDEX = 5
-MINOR_TIME_INDEX = 1
+MINOR_TIME_INDEX = MAJOR_TIME_INDEX / 5
 MAJOR_VOLTAGE_INDEX = 1
-MINOR_VOLTAGE_INDEX = 0.25
-
+MINOR_VOLTAGE_INDEX = MAJOR_VOLTAGE_INDEX / 5
 COLORS = dict(bg_blue='#0B3C5D', bg_red='#B82601', bg_green='#1c6b0a',
               bg_lightblue='#328CC1', bg_grey='#a8b6c1', bg_yellow='#D9B310',
               bg_palered='#984B43', bg_maroon='#76323F', bg_palegreen='#626E60',
@@ -29,22 +24,45 @@ COLOR = COLORS['bg_blue']
 def maccor_echem_load(maccor_echem_file):
     with open(maccor_echem_file, 'r') as input_file:
         lines = input_file.readlines()
-    for i,line in enumerate(lines):
-        if "Rec" in line and "Cycle" in line and "Step"	in line:
-            start = i + 3
-    time_min_pre, time_min, time_s, time_h, voltage = [], [], [], [], []
+    for i in range(len(lines)):
+        if "Rec" in lines[i] and "Cycle" in lines[i] and "Step"	in lines[i]:
+            header_end = i
+            header_split = lines[i].split("\t")
+            break
+    for i in range(len(header_split)):
+        if "Step" in header_split[i] and "Time" in header_split[i]:
+            step_time_index = i
+            if "sec" in header_split[step_time_index]:
+                time_unit = "s"
+            else:
+                time_unit = "min"
+        elif "Test" in header_split[i] and "Time" in header_split[i]:
+            test_time_index = i
+        elif "Current" in header_split[i]:
+            current_index = i
+        elif "Cap" in header_split[i]:
+            cap_index = i
+        elif "Voltage" in header_split[i]:
+            voltage_index = i
+    for i in range(header_end+1, len(lines)):
+        if not lines[i] == "\n":
+            current_val = float(lines[i].split("\t")[current_index])
+            cap_val = float(lines[i].split("\t")[cap_index])
+            cap_val = np.array([cap_val])
+            if current_val != 0 and cap_val == 0:
+                start = i
+                break
+    time, voltage = [], []
     for i in range(start, len(lines)):
-        time = float(lines[i].split()[4])
-        time_min_pre.append(time)
-        voltage.append(float(lines[i].split()[9]))
-    for i in range(0, len(time_min_pre)):
-        time_min_corrected = time_min_pre[i] - time_min_pre[0]
-        time_min.append(time_min_corrected)
-        time_s.append(time_min_corrected * 60)
-        time_h.append(time_min_corrected / 60)
-    time, time_min_pre, voltage = np.array(time), np.array(time_min_pre), np.array(voltage)
-    time_min_corrected, time_min = np.array(time_min_corrected), np.array(time_min)
-    time_s, time_h = np.array(time_s), np.array(time_h)
+        line_split = lines[i].replace(",", "").split()
+        time.append(float(line_split[test_time_index]))
+        voltage.append(float(line_split[voltage_index]))
+    time, voltage = np.array(time), np.array(voltage)
+    time = time - time[0]
+    if time_unit == "s":
+        time_s, time_min, time_h = time, time / 60, time / 60**2
+    else:
+        time_s, time_min, time_h = time * 60, time, time / 60
     maccor_echem_data = np.column_stack((time_h, voltage))
 
     return maccor_echem_data
@@ -63,7 +81,7 @@ def echem_plot(echem_data, fname):
     fig, ax = plt.subplots(dpi=DPI, figsize=FIGSIZE)
     plt.plot(time_h, voltage, c=COLOR, lw=LINEWIDTH)
     plt.xlim(np.amin(time_h), np.amax(time_h))
-    plt.ylim(VOLTAGE_MIN, VOLTAGE_MAX)
+    plt.ylim(np.amin(voltage), np.amax(voltage))
     plt.xlabel(r"$t$ $[\mathrm{h}]$", fontsize=FONTSIZE_LABELS)
     plt.ylabel(r"$V$ $[\mathrm{V}]$", fontsize=FONTSIZE_LABELS)
     plt.tick_params(axis="both", labelsize=FONTSIZE_TICKS)
@@ -86,11 +104,13 @@ def main():
         print(f"{80*'-'}\nA folder called '{data_path.stem}' has been created. "
               f"Please place your .txt file(s)\ncontaining maccor "
               f"electrochemical data there and rerun the code.\n{80*'-'}")
+        sys.exit()
     data_files = list(data_path.glob("*.txt"))
     if len(data_files) == 0:
         print(f"{80*'-'}\nNo .txt files were found in the '{data_path.stem}' "
               f" folder. Please place your .txt\nfile(s) containing maccor "
               f"electrochemical data there and rerun the code.\n{80*'-'}")
+        sys.exit()
     output_paths = ["txt", "pdf", "png"]
     for e in output_paths:
         if not (Path.cwd() / e).exists():

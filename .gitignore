@@ -4,6 +4,12 @@ biologic_echem_extract_write_plot/example/png
 biologic_echem_extract_write_plot/example/pdf
 biologic_echem_extract_write_plot/example/txt
 
+# biologic_t_x_v_plot
+biologic_t_x_v_plot/example/data_comma_to_dot
+biologic_t_x_v_plot/example/pdf
+biologic_t_x_v_plot/example/png
+biologic_t_x_v_plot/example/svg
+
 # maccor_echem_extract_write_plot
 maccor_echem_extract_write_plot/example/maccor_APS032018/pdf
 maccor_echem_extract_write_plot/example/maccor_APS032018/png

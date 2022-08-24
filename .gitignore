@@ -2,6 +2,7 @@
 biologic_echem_extract_write_plot/example/comma_to_dot
 biologic_echem_extract_write_plot/example/png
 biologic_echem_extract_write_plot/example/pdf
+biologic_echem_extract_write_plot/example/svg
 biologic_echem_extract_write_plot/example/txt
 
 # biologic_t_x_v_plot

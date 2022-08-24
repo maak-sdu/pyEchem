@@ -3,18 +3,22 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+try:
+    from bg_mpl_stylesheet.bg_mpl_stylesheet import bg_mpl_style
+    STYLE = True
+except ImportError:
+    STYLE = False
+    COLORS = dict(bg_blue='#0B3C5D', bg_red='#B82601', bg_green='#1c6b0a',
+                  bg_lightblue='#328CC1', bg_grey='#a8b6c1', bg_yellow='#D9B310',
+                  bg_palered='#984B43', bg_maroon='#76323F', bg_palegreen='#626E60',
+                  bg_palebrown='#AB987A', bg_paleyellow='#C09F80')
+    COLOR = COLORS['bg_blue']
 
-DPI=300
+DPI=600
 FIGSIZE = (8,4)
 FONTSIZE_LABELS = 20
 FONTSIZE_TICKS = 14
 LINEWIDTH = 1
-COLORS = dict(bg_blue='#0B3C5D', bg_red='#B82601', bg_green='#1c6b0a',
-              bg_lightblue='#328CC1', bg_grey='#a8b6c1', bg_yellow='#D9B310',
-              bg_palered='#984B43', bg_maroon='#76323F', bg_palegreen='#626E60',
-              bg_palebrown='#AB987A', bg_paleyellow='#C09F80')
-COLOR = COLORS['bg_blue']
-
 
 def comma_to_dot(txt_files, comma_to_dot_path):
     print(f"{80*'-'}\nConverting commas to dots...")
@@ -26,12 +30,12 @@ def comma_to_dot(txt_files, comma_to_dot_path):
         with open(output_path_file, mode="w") as o:
             o.write(txt)
     print(f"Done converting comma to dots.\nFiles saved to the "
-          f"'data/comma_to_dot' folder.")
+          f"'comma_to_dot' folder.")
 
     return None
 
 
-def ec_lab_extractor(txt_files_dotted, output_path):
+def ec_lab_extractor(txt_files_dotted, output_path, plotpaths):
     for file in txt_files_dotted:
         print(f"{80*'-'}\nFile:\t{file.name}")
         with file.open() as f:
@@ -48,6 +52,7 @@ def ec_lab_extractor(txt_files_dotted, output_path):
         if x_desire_key == "time/s":
             x_values = x_values / 60**2
         rest_desire = input("\n\tDo you want to remove any initial resting from the data? (y/n): ")
+        print(f"\n\tExtracting data...")
         if rest_desire == "y":
             if "x" in keys:
                 x = df["x"].to_numpy()
@@ -93,55 +98,62 @@ def ec_lab_extractor(txt_files_dotted, output_path):
         else:
             output_path = output_path / f"{file.stem}_{x_name}_vs_{y_name}.txt"
         np.savetxt(output_path, np.column_stack((x_values, y_values)))
-        xy_plotter(x_values, y_values, x_desire_key, y_desire_key, rest_desire, file.stem)
+        print(f"\tDone extracting data.\n\tPlease see the 'txt' directory for "
+              f"two-column of file of the requested\n\tdata.\n\n\tPlotting "
+              f"data...")
+        xy_plotter(x_values, y_values, x_desire_key, y_desire_key, rest_desire, file.stem, plotpaths)
+        plotfolders = [p.name for p in plotpaths]
+        print(f"\tDone plotting data.\n\tPlease see the {plotfolders} folders.")
 
         return None
 
 
-def xy_plotter(x_values, y_values, x_desire_key, y_desire_key, rest_desire, filename):
+def xy_plotter(x_values, y_values, x_desire_key, y_desire_key, rest_desire, filename, plotpaths):
+    if STYLE:
+        plt.style.use(bg_mpl_style)
     fig, ax = plt.subplots(dpi=DPI, figsize=FIGSIZE)
     if "time" in x_desire_key:
         if np.amax(x_values) > 100:
             x_values = x_values / 60**2
-    plt.plot(x_values, y_values, color=COLOR, lw=LINEWIDTH)
-    plt.xlim(np.amin(x_values), np.amax(x_values))
-    plt.ylim(np.amin(y_values), np.amax(y_values))
-    plt.xticks(fontsize=FONTSIZE_TICKS)
-    plt.yticks(fontsize=FONTSIZE_TICKS)
-    if x_desire_key == "time/s":
-        plt.xlabel(r"$t$ $[\mathrm{h}]$", fontsize=FONTSIZE_LABELS)
-    elif x_desire_key == "Ewe/V":
-        plt.xlabel(r"$V$ $[\mathrm{V}]$", fontsize=FONTSIZE_LABELS)
-    elif "x" == x_desire_key:
-        plt.xlabel(r"$x$", fontsize=FONTSIZE_LABELS)
-    elif "<i>/mA" == x_desire_key:
-        plt.xlabel(r"$i$ $[\mathrm{mA}]$", fontsize=FONTSIZE_LABELS)
-    elif "Q discharge/mA.h" == x_desire_key:
-        plt.xlabel(r"$Q_{\mathrm{discharge}}$ $[\mathrm{mAh}]$", fontsize=FONTSIZE_LABELS)
-    elif "Q discharge/mA.h" == x_desire_key:
-        plt.xlabel(r"$Q_{\mathrm{charge}}$ $[\mathrm{mAh}]$", fontsize=FONTSIZE_LABELS)
-    if y_desire_key == "time/s":
-        plt.ylabel(r"$t$ $[\mathrm{h}]$", fontsize=FONTSIZE_LABELS)
-    elif y_desire_key == "Ewe/V":
-        plt.ylabel(r"$V$ $[\mathrm{V}]$", fontsize=FONTSIZE_LABELS)
-    elif "x" == y_desire_key:
-        plt.ylabel(r"$x$", fontsize=FONTSIZE_LABELS)
-    elif "<i>/mA" == y_desire_key:
-        plt.ylabel(r"$i$ $[\mathrm{mA}]$", fontsize=FONTSIZE_LABELS)
-    elif "Q discharge/mA.h" == y_desire_key:
-        plt.ylabel(r"$Q_{\mathrm{discharge}}$ $[\mathrm{mAh}]$", fontsize=FONTSIZE_LABELS)
-    elif "Q discharge/mA.h" == y_desire_key:
-        plt.ylabel(r"$Q_{\mathrm{charge}}$ $[\mathrm{mAh}]$", fontsize=FONTSIZE_LABELS)
-    plotfolders = ["png", "pdf"]
-    for folder in plotfolders:
-        if not (Path.cwd() / folder).exists():
-            (Path.cwd() / folder).mkdir()
-    if rest_desire == "y":
-        plt.savefig(f"png/{filename}_no-rest.png", bbox_inches="tight")
-        plt.savefig(f"png/{filename}_no-rest.pdf", bbox_inches="tight")
+    if STYLE:
+        ax.plot(x_values, y_values, lw=LINEWIDTH)
     else:
-        plt.savefig(f"png/{filename}.png", bbox_inches="tight")
-        plt.savefig(f"pdf/{filename}.pdf", bbox_inches="tight")
+        ax.plot(x_values, y_values, color=COLOR, lw=LINEWIDTH)
+    ax.set_xlim(np.amin(x_values), np.amax(x_values))
+    ax.set_ylim(np.amin(y_values), np.amax(y_values))
+    ax.tick_params(axis="both", labelsize=FONTSIZE_TICKS)
+    ax.minorticks_on()
+    if x_desire_key == "time/s":
+        xlabel = r"$t$ $[\mathrm{h}]$"
+    elif x_desire_key == "Ewe/V":
+        xlabel = r"$V$ $[\mathrm{V}]$"
+    elif "x" == x_desire_key:
+        xlabel = r"$x$"
+    elif "<i>/mA" == x_desire_key:
+        xlabel = r"$i$ $[\mathrm{mA}]$"
+    elif "Q discharge/mA.h" == x_desire_key:
+        xlabel = r"$Q_{\mathrm{discharge}}$ $[\mathrm{mAh}]$"
+    elif "Q discharge/mA.h" == x_desire_key:
+        xlabel = r"$Q_{\mathrm{charge}}$ $[\mathrm{mAh}]$"
+    ax.set_xlabel(xlabel, fontsize=FONTSIZE_LABELS)
+    if y_desire_key == "time/s":
+        ylabel = r"$t$ $[\mathrm{h}]$"
+    elif y_desire_key == "Ewe/V":
+        ylabel = r"$V$ $[\mathrm{V}]$"
+    elif "x" == y_desire_key:
+        ylabel = r"$x$"
+    elif "<i>/mA" == y_desire_key:
+        ylabel = r"$i$ $[\mathrm{mA}]$"
+    elif "Q discharge/mA.h" == y_desire_key:
+        ylabel = r"$Q_{\mathrm{discharge}}$ $[\mathrm{mAh}]$"
+    elif "Q discharge/mA.h" == y_desire_key:
+        ylabel = r"$Q_{\mathrm{charge}}$ $[\mathrm{mAh}]$"
+    ax.set_ylabel(ylabel, fontsize=FONTSIZE_LABELS)
+    for p in plotpaths:
+        if rest_desire == "y":
+            plt.savefig(f"{p.name}/{filename}_no-rest.{p.name}", bbox_inches="tight")
+        else:
+            plt.savefig(f"{p.name}/{filename}.{p.name}", bbox_inches="tight")
 
     return None
 
@@ -168,11 +180,13 @@ def main():
     if not txt_path.exists():
         txt_path.mkdir()
     txt_files_dotted = comma_to_dot_path.glob("*.txt")
-    print("Working with files...")
-    ec_lab_extractor(txt_files_dotted, txt_path)
-    print(f"{80*'-'}\nDone working with files.\n{80*'-'}\nPlease see the 'txt' "
-          f"directory for two-column of files of the requested data.\nPlease "
-          f"see the 'pdf' and 'png' folders for plots.\n{80*'-'}")
+    plotpaths = [Path.cwd() / "png", Path.cwd() / "pdf", Path.cwd() / "svg"]
+    for p in plotpaths:
+        if not p.exists():
+            p.mkdir()
+    print(f"{80*'-'}\nWorking with files...")
+    ec_lab_extractor(txt_files_dotted, txt_path, plotpaths)
+    print(f"{80*'-'}\nDone working with files.")
 
     return None
 

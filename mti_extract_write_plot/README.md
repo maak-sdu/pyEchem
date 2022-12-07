@@ -15,12 +15,13 @@ content of the working electrode will be exported to more user-friendly `.txt`
 files. This goes for all of the data but also for each individual cycle.
 
 A number of plots will be created, including:
-- time vs. the working ion potential
+- time vs. the working electrode potential
 - working ion content of the working electrode vs. the working electrode
   potential
 - capacity (charge and discharge) vs. working electrode potential
 - cycle number vs. capacity (charge and discharge)
 - cycle number vs. couloumbic efficiency
+
 All plots will be saved to `png`, `pdf`, and `svg` files.
 
 ## Setup and installation

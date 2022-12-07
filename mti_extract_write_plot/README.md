@@ -86,7 +86,7 @@ Sample information:
 - Empirical formula for working electrode: `LiNi0.8Mn0.1Co0.1O2`
 - Initial working ion content of the working electrode: `1`
 - Working ion is Li, prompt: `0`
-- The counter electrode us LTO, prompt: `4`
+- The counter electrode is LTO, prompt: `4`
 
 The remaining prompts are solely plot-related and the following is just one
 possibility:

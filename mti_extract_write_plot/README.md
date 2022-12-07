@@ -14,7 +14,7 @@ subfolder with the name of the `.txt` file will be created.
 
 The time, working electrode potential, current, capacity, and working ion
 content of the working electrode will be exported to more user-friendly `.txt`
-files. This goes for all of the data but also for each individual cycle.
+files. This goes for all of the data as well as for each individual cycle.
 
 A number of plots will be created, including:
 - time vs. the working electrode potential

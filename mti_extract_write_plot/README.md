@@ -70,3 +70,26 @@ python mti_extract_write_plot.py
 The user will have to prompt a series of information. Some information is meant
 for calculation, while other information is meant for plotting aspects. The user
 will have to prompt information for each `.txt` file in the `data` directory.
+
+## Example
+Within the `example` folder found in this GitHub repository, a `data` folder
+containing an example `.txt` file can be found. In addition to the `data`
+folder, a `mti_extract_write_plot.py` file can be found.
+
+Navigate to the `example` directory and run the program:
+```shell
+python mti_extract_write_plot.py
+```
+
+Sample information:
+- Mass of activate electrode material: 14.875
+- Empirical formula for working electrode: LiNi0.8Mn0.1Co0.1O2
+- Initial working ion content of the working electrode: 1
+- Working ion is Li, so prompt: 0
+- The counter electrode us LTO, so prompt: 4
+
+The remaining prompts are solely plot-related and the following is just one
+possibility:
+- Colorbar or legend, for colorbar prompt: 0
+- Colormap type, for user-defined colormap prompt: 0
+- Colormap, for user-defined red colormap prompt: 0

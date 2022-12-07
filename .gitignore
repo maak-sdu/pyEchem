@@ -20,6 +20,7 @@ maccor_echem_extract_write_plot/example/maccor_APS032019/png
 maccor_echem_extract_write_plot/example/maccor_APS032019/txt
 
 # mti_extract_write_plot
+mti_extract_write_plot/example/.ipynb_checkpoints
 mti_extract_write_plot/example/pdf
 mti_extract_write_plot/example/png
 mti_extract_write_plot/example/svg

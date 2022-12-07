@@ -27,12 +27,12 @@ the `mti_extract_write_plot` code will be installed.
   ```shell
   conda install -c conda-forge --file requirements/run.txt
   ```
-- Additional dependencies using pip will be installed, when running:
+- Using pip, additional dependencies will be installed, when running:
   ```shell
   pip install -r requirements/pip_requirements.txt
   ```
-Now, all `mti_extract_write_plot` dependencies are now installed for the
-`pyechem` conda environment. The user will now be able to run the
+Now, all `mti_extract_write_plot` dependencies are installed for the `pyechem`
+conda environment. The user will now be able to run the
 `mti_extract_write_plot.py` file:
 ```shell
 python mti_extract_write_plot.py

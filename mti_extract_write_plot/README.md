@@ -82,7 +82,7 @@ python mti_extract_write_plot.py
 ```
 
 Sample information:
-- Mass of activate electrode material: `14.875`
+- Mass of activate electrode material (mg): `14.875`
 - Empirical formula for working electrode: `LiNi0.8Mn0.1Co0.1O2`
 - Initial working ion content of the working electrode: `1`
 - Working ion is Li, prompt: `0`

@@ -1,4 +1,6 @@
 # mti_extract_write_plot
+
+## What does the program do?
 The code found within the `mti_extract_write_plot.py` file will extract data
 exported to a `.txt` file from the MTI potentiostat used at the Department of
 Chemistry, Aarhus University.
@@ -56,8 +58,15 @@ the `mti_extract_write_plot` code will be installed.
   pip install -r requirements/pip_requirements.txt
   ```
 Now, all `mti_extract_write_plot` dependencies are installed for the `pyechem`
-conda environment. The user will now be able to run the
-`mti_extract_write_plot.py` file:
+conda environment.
+
+## Running the program
+Having all dependencies installed in the `pyechem` conda environment and having
+it activated, the user will be able to run the `mti_extract_write_plot.py` file:
 ```shell
 python mti_extract_write_plot.py
 ```
+
+The user will have to prompt a series of information. Some information is meant
+for calculation, while other information is meant for plotting aspects. The user
+will have to prompt information for each `.txt` file in the `data` directory.

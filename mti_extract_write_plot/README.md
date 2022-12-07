@@ -67,6 +67,16 @@ it activated, the user will be able to run the `mti_extract_write_plot.py` file:
 python mti_extract_write_plot.py
 ```
 
+Alternatively, the program can be run as an iPython notebook, `.ipynb` file.
+To run the `.ipynb` file, initiate a Jupyter Notebook or Jupyter Lab session:
+```shell
+jupyter notebook
+```
+
+```shell
+jupyter-lab
+```
+
 The user will have to prompt a series of information. Some information is meant
 for calculation, while other information is meant for plotting aspects. The user
 will have to prompt information for each `.txt` file in the `data` directory.

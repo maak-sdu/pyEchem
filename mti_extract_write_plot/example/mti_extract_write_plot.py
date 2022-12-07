@@ -1,8 +1,6 @@
 import sys
 from pathlib import Path
 import re
-from molmass import Formula
-import quantities
 from datetime import datetime
 import numpy as np
 from scipy.constants import physical_constants
@@ -10,51 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 from matplotlib.cm import get_cmap
 from bg_mpl_stylesheet.bg_mpl_stylesheet import bg_mpl_style
-
-# Input section
-D_PLOT = dict(dpi = 600,
-              figsize = (12,4),
-              fontsize_labels=20,
-              fontsize_ticks=14,
-              t_std_label="$t\;[\mathrm{h}]$",
-              x_std_label="$x$",
-              cap_std_label="$Q\;[\mathrm{mAh/g}]$",
-              cycle_std_label="$\mathrm{cycle}$",
-              ce_std_label="$CE$",
-              )
-# End of input section
-
-D_EWE_LABEL = dict(Li=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Li/Li^{+}\;[V]}$",
-                   Na=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Na/Na^{+}\;[V]}$",
-                   Mg=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Mg/Mg^{2+}\;[V]}$",
-                   NMC=r"$E_{\mathrm{we}}\;\mathrm{vs.\;NMC\;[V]}$",
-                   LTO=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Li_{4}Ti_{5}O_{12}\;[V]}$",
-                   Other=r"$V\;[\mathrm{V}]$",
-                   )
-
-D_WORKING_ION = dict(Li=1, Na=1, Mg=2)
-
-D_RGB = dict(red=(255, 0, 0),
-             green=(0, 255, 0),
-             blue=(0, 0, 255),
-             indigo=(75, 0, 130),
-             magenta=(255, 0, 255),
-             violet=(138, 43, 226),
-             purple=(128, 0, 128),
-             maroon=(128, 0, 0),
-             teal=(0, 128, 128),
-             navy=(0, 0, 128),
-             cyan=(0, 255, 255),
-             )
-
-CMAPS = sorted([e for e in plt.colormaps()], key=str.lower)
-
-D_INDICES = dict(voltage_index = 2,
-                 current_index = 3,
-                 capacity_index = 5,
-                 date_index = -2,
-                 time_index = -1,
-                 )
+import quantities
+from molmass import Formula
 
 
 def mti_extract(file, d_indices):

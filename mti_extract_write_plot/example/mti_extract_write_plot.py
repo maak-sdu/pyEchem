@@ -11,7 +11,9 @@ from bg_mpl_stylesheet.bg_mpl_stylesheet import bg_mpl_style
 import quantities
 from molmass import Formula
 
+# Input section
 
+# Plot settings
 D_PLOT = dict(dpi = 600,
               figsize = (12,4),
               fontsize_labels=20,
@@ -23,17 +25,20 @@ D_PLOT = dict(dpi = 600,
               ce_std_label="$CE$",
               )
 
-
-D_EWE_LABEL = dict(Li=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Li/Li^{+}\;[V]}$",
-                   Na=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Na/Na^{+}\;[V]}$",
-                   Mg=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Mg/Mg^{2+}\;[V]}$",
-                   NMC=r"$E_{\mathrm{we}}\;\mathrm{vs.\;NMC\;[V]}$",
-                   LTO=r"$E_{\mathrm{we}}\;\mathrm{vs.\;Li_{4}Ti_{5}O_{12}\;[V]}$",
-                   Other=r"$V\;[\mathrm{V}]$",
+# Working electrode potential labels
+D_EWE_LABEL = dict(Li="$E_{\mathrm{we}}\;\mathrm{vs.\;Li/Li^{+}\;[V]}$",
+                   Na="$E_{\mathrm{we}}\;\mathrm{vs.\;Na/Na^{+}\;[V]}$",
+                   Mg="$E_{\mathrm{we}}\;\mathrm{vs.\;Mg/Mg^{2+}\;[V]}$",
+                   NMC="$E_{\mathrm{we}}\;\mathrm{vs.\;NMC\;[V]}$",
+                   LTO="$E_{\mathrm{we}}\;\mathrm{vs.\;Li_{4}Ti_{5}O_{12}\;"
+                       "[V]}$",
+                   Other="$V\;[\mathrm{V}]$",
                    )
 
+# Working ion valences
 D_WORKING_ION = dict(Li=1, Na=1, Mg=2)
 
+# RGB colors for user-defined colormaps
 D_RGB = dict(red=(255, 0, 0),
              green=(0, 255, 0),
              blue=(0, 0, 255),
@@ -47,14 +52,18 @@ D_RGB = dict(red=(255, 0, 0),
              cyan=(0, 255, 255),
              )
 
+# Matplotlib colormaps
 CMAPS = sorted([e for e in plt.colormaps()], key=str.lower)
 
+# Indices used for data extraction
 D_INDICES = dict(voltage_index = 2,
                  current_index = 3,
                  capacity_index = 5,
                  date_index = -2,
                  time_index = -1,
                  )
+
+# End of input section
 
 
 def mti_extract(file, d_indices):
@@ -166,7 +175,7 @@ def x_calc(d, mass, molar_mass, x_start, working_ion_valence):
     x = [x_start]
     for i in range(1, len(time)):
         delta_q =  current[i] * (time[i] - time[i-1]) / working_ion_valence
-        delta_x = delta_q / (n * f)
+        delta_x = - delta_q / (n * f)
         x.append(x[i-1] + delta_x)
     change_indices = [i for i in range(1, len(current))
                       if current[i] != 0
@@ -281,7 +290,7 @@ def cycles_write(d, output_path):
     cycles = list(d.keys())
     for cycle in cycles:
         keys = list(d[cycle].keys())
-        header = f"t [s]\tV [V]\tI [A]\tx"
+        header = f"t [s]\tV [V]\tI [A]\tQ [mAh/g]\tx"
         array = d[cycle][keys[0]]
         for i in range(1, len(keys)):
             array = np.column_stack((array, d[cycle][keys[i]]))
@@ -305,8 +314,6 @@ def capacities_extract(d):
     cap_charge, cap_discharge = [], []
     for e in half_cycles:
         current, capacity = d[e]["current"], d[e]["capacity"]
-    #     print(e, f"{current[-1]:.6f}", f"{capacity[-1]:.2f}")
-    # sys.exit()
         if current[-1] > 10**-5:
             cap_charge.append(capacity[-1])
         else:
@@ -326,12 +333,12 @@ def capacities_extract(d):
     return d_caps
 
 
-def plot_time_voltage(filename, d_data, d_plot, plot_paths, ax=None, save=True):
+def plot_time_voltage(filename, d_data, d_plot, plot_paths, save=True):
     time, voltage = d_data["time"]*60**-2, d_data["voltage"]
     plt.style.use(bg_mpl_style)
     fig, ax = plt.subplots(dpi=d_plot["dpi"], figsize=d_plot["figsize"])
     colors = d_plot["colors"](np.linspace(0, 1, 10))
-    out = ax.plot(time, voltage, c=colors[-2])
+    ax.plot(time, voltage, c=colors[-2])
     ax.set_xlabel(d_plot["t_std_label"], fontsize=d_plot["fontsize_labels"])
     ax.set_ylabel(d_plot["ewe_label"], fontsize=d_plot["fontsize_labels"])
     ax.tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
@@ -344,7 +351,7 @@ def plot_time_voltage(filename, d_data, d_plot, plot_paths, ax=None, save=True):
             plt.savefig(output_path, bbox_inches="tight")
         plt.close()
 
-    return out
+    return None
 
 
 def plot_x_voltage(filename, d_data, d_plot, plot_paths):
@@ -352,7 +359,7 @@ def plot_x_voltage(filename, d_data, d_plot, plot_paths):
     plt.style.use(bg_mpl_style)
     colors = d_plot["colors"](np.linspace(0, 1, 3))
     fig, ax = plt.subplots(dpi=d_plot["dpi"], figsize=d_plot["figsize"])
-    out = ax.plot(x, voltage, color=colors[1])
+    ax.plot(x, voltage, color=colors[1])
     ax.set_xlabel(d_plot["x_std_label"], fontsize=d_plot["fontsize_labels"])
     ax.set_ylabel(d_plot["ewe_label"], fontsize=d_plot["fontsize_labels"])
     ax.tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
@@ -364,16 +371,10 @@ def plot_x_voltage(filename, d_data, d_plot, plot_paths):
         plt.savefig(output_path, bbox_inches="tight")
     plt.close()
 
-    return out
+    return None
 
 
-def plot_x_voltage_cycles_cbar(filename,
-                               d,
-                               d_plot,
-                               plot_paths,
-                               ax=None,
-                               save=True,
-                               ):
+def plot_x_voltage_cycles_cbar(filename, d, d_plot, plot_paths, save=True):
     cycles = list(d.keys())
     colors = d_plot["colors"](np.linspace(0, 1, len(cycles)))
     plt.style.use(bg_mpl_style)
@@ -416,7 +417,7 @@ def plot_x_voltage_cycles_cbar(filename,
             plt.savefig(output_path, bbox_inches="tight")
         plt.close()
 
-    return axs
+    return None
 
 
 def plot_x_voltage_cycles_legend(filename, d, d_plot, plot_paths):
@@ -476,7 +477,7 @@ def plot_x_voltage_cycles_legend(filename, d, d_plot, plot_paths):
         output_path = p / f"{filename}_x-ewe.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
 
-    return ax
+    return None
 
 
 def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
@@ -492,12 +493,13 @@ def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
                             ncols=2,
                             gridspec_kw=dict(width_ratios=[1, 0.01]),
                             )
-    xmax = []
+    xmin, xmax = [], []
     counter = 0
     for i in range(len(half_cycles)):
         capacity = d[half_cycles[i]]["capacity"]
         voltage = d[half_cycles[i]]["voltage"]
         axs[0].plot(capacity, voltage, label=str(counter), c=colors[counter])
+        xmin.append(np.amin(capacity))
         xmax.append(np.amax(capacity))
         if i % 2 != 0:
             counter += 1
@@ -505,9 +507,9 @@ def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
     axs[0].set_ylabel(d_plot["ewe_label"], fontsize=d_plot["fontsize_labels"])
     axs[0].tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
     axs[0].minorticks_on()
-    xmin, xmax = 0, np.amax(xmax)
+    xmin, xmax = np.amin(np.array(xmin)), np.amax(np.array(xmax))
     xrange = xmax - xmin
-    axs[0].set_xlim(xmin, xmax + (0.01 * xrange))
+    axs[0].set_xlim(xmin - (0.01 * xrange), xmax + (0.01 * xrange))
     sm = plt.cm.ScalarMappable(cmap=d_plot["colors"].reversed(),
                                norm=plt.Normalize(vmin=0, vmax=1),
                                )
@@ -523,7 +525,7 @@ def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
         output_path = p / f"{filename}_cap-ewe.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
 
-    return axs
+    return None
 
 
 def plot_capacity_voltage_legend(filename, d, d_plot, plot_paths):
@@ -538,6 +540,7 @@ def plot_capacity_voltage_legend(filename, d, d_plot, plot_paths):
         capacity = d[half_cycles[i]]["capacity"]
         voltage = d[half_cycles[i]]["voltage"]
         ax.plot(capacity, voltage, label=str(counter), c=colors[counter])
+        xmin.append(np.amin(capacity))
         xmax.append(np.amax(capacity))
         if i % 2 != 0:
             counter += 1
@@ -545,15 +548,15 @@ def plot_capacity_voltage_legend(filename, d, d_plot, plot_paths):
     ax.set_ylabel(d_plot["ewe_label"], fontsize=d_plot["fontsize_labels"])
     ax.tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
     ax.minorticks_on()
-    xmin, xmax = 0, np.amax(xmax)
+    xmin, xmax = np.amin(np.array(xmin)), np.amax(np.array(xmax))
     xrange = xmax - xmin
-    ax.set_xlim(xmin, xmax + (0.01 * xrange))
+    ax.set_xlim(xmin - (0.01 * xrange), xmax + (0.01 * xrange))
     for p in plot_paths:
         print(f"\t\t\t{p.parent.name}")
         output_path = p / f"{filename}_cap-ewe.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
 
-    return ax
+    return None
 
 
 def plot_cycle_capacity(filename, d, d_plot, plot_paths):
@@ -588,7 +591,7 @@ def plot_cycle_capacity(filename, d, d_plot, plot_paths):
         output_path = p / f"{filename}_cycle-cap.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
 
-    return ax
+    return None
 
 
 def plot_cycle_ce(filename, d, d_plot, plot_paths):
@@ -610,65 +613,8 @@ def plot_cycle_ce(filename, d, d_plot, plot_paths):
         output_path = p / f"{filename}_cycle-ce.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
 
-    return ax
-
-
-def plot_stack(filename,
-               d_data,
-               d_cycles,
-               d_half_cycles,
-               d_plot,
-               plot_paths,
-               n_plots
-               ):
-    plt.style.use(bg_mpl_style)
-    n_plots = 2
-    figsize = (d_plot["figsize"][0], d_plot["figsize"][1] * n_plots)
-    fig, axs = plt.subplots(nrows=n_plots, figsize=figsize)
-    plot_time_voltage(filename,
-                      d_data,
-                      d_plot,
-                      plot_paths,
-                      ax=axs[0],
-                      save=False,
-                      )
-    plot_time_voltage(filename,
-                      d_data,
-                      d_plot,
-                      plot_paths,
-                      ax=axs[1],
-                      save=False,
-                      )
-    # if d_plot["cbar_legend"] == "cbar":
-    #     plot_x_voltage_cycles_cbar(filename,
-    #                                d_cycles,
-    #                                d_plot,
-    #                                plot_paths,
-    #                                ax=axs[1],
-    #                                save=False,
-    #                                )
-    # elif d_plot["cbar_legend"] == "legend":
-    #     plot_x_voltage_cycles_legend(filename,
-    #                                  d_cycles,
-    #                                  d_plot,
-    #                                  plot_paths,
-    #                                  ax=axs[1],
-    #                                  save=False,
-    #                                  )
-    # figsize = (d_plot["figsize"][0], d_plot["figsize"][1] * n_subplots)
-    # fig = plt.figure(dpi=d_plot["dpi"],
-    #                  figsize=figsize,
-    #                  )
-    # for i,k in enumerate(keys):
-    #     ax = plt.subplot(n_subplots, 1, i+1)
-    #     ax = d[k].plot()
-    for p in plot_paths:
-        print(f"\t\t\t{p.parent.name}")
-        output_path = p / f"{filename}_stack.{p.parent.name}"
-        plt.savefig(output_path, bbox_inches="tight")
-    plt.close()
-
     return None
+
 
 def main():
     data_path, txt_path = Path.cwd() / "data", Path.cwd() / "txt"
@@ -784,10 +730,8 @@ def main():
               )
         plot_paths_sample = [png_path_sample, pdf_path_sample, svg_path_sample]
         plot_folders = [p.parent.name for p in plot_paths_sample]
-        plot_counter = 0
         print(f"\t\ttime vs. voltage...")
         plot_time_voltage(f.stem, d_data, D_PLOT, plot_paths_sample,)
-        plot_counter += 1
         print(f"\t\tx vs. voltage...")
         if D_PLOT["cbar_legend"] == "cbar":
             plot_x_voltage_cycles_cbar(f.stem,
@@ -795,14 +739,12 @@ def main():
                                        D_PLOT,
                                        plot_paths_sample,
                                        )
-            plot_counter += 1
         elif D_PLOT["cbar_legend"] == "legend":
             plot_x_voltage_cycles_legend(f.stem,
                                          d_cycles,
                                          D_PLOT,
                                          plot_paths_sample,
                                          )
-            plot_counter += 1
         print(f"\t\tcapacity vs. voltage...")
         if D_PLOT["cbar_legend"] == "cbar":
             plot_capacity_voltage_cbar(f.stem,
@@ -810,33 +752,20 @@ def main():
                                        D_PLOT,
                                        plot_paths_sample,
                                        )
-            plot_counter += 1
         elif D_PLOT["cbar_legend"] == "legend":
             plot_capacity_voltage_legend(f.stem,
                                          d_half_cycles,
                                          D_PLOT,
                                          plot_paths_sample,
                                          )
-            plot_counter += 1
         print(f"\t\tcycle number vs. capacity...")
         ax_cycles_cap = plot_cycle_capacity(f.stem,
                                             d_caps,
                                             D_PLOT,
                                             plot_paths_sample,
                                             )
-        plot_counter += 1
         print(f"\t\tcycle number vs. couloumbic efficiency...")
         plot_cycle_ce(f.stem, d_caps, D_PLOT, plot_paths_sample)
-        plot_counter += 1
-        # print(f"\t\tStack plot...")
-        # plot_stack(f.stem,
-        #            d_data,
-        #            d_cycles,
-        #            d_half_cycles,
-        #            D_PLOT,
-        #            plot_paths_sample,
-        #            plot_counter,
-        #            )
         print(f"\tDone plotting data.\n\tPlease see the {plot_folders} "
               f"folders.")
     print(f"{80*'-'}\nDone working with files.")

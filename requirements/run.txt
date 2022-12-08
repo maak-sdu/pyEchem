@@ -1,0 +1,7 @@
+numpy
+pandas
+scipy
+matplotlib-base
+bg-mpl-stylesheets
+quantities
+jupyterlab

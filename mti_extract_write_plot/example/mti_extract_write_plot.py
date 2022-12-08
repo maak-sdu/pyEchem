@@ -333,7 +333,7 @@ def capacities_extract(d):
     return d_caps
 
 
-def plot_time_voltage(filename, d_data, d_plot, plot_paths, save=True):
+def plot_time_voltage(filename, d_data, d_plot, plot_paths):
     time, voltage = d_data["time"]*60**-2, d_data["voltage"]
     plt.style.use(bg_mpl_style)
     fig, ax = plt.subplots(dpi=d_plot["dpi"], figsize=d_plot["figsize"])
@@ -344,12 +344,11 @@ def plot_time_voltage(filename, d_data, d_plot, plot_paths, save=True):
     ax.tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
     ax.minorticks_on()
     ax.set_xlim(np.amin(time), np.amax(time))
-    if save:
-        for p in plot_paths:
-            print(f"\t\t\t{p.parent.name}")
-            output_path = p / f"{filename}_t-ewe.{p.parent.name}"
-            plt.savefig(output_path, bbox_inches="tight")
-        plt.close()
+    for p in plot_paths:
+        print(f"\t\t\t{p.parent.name}")
+        output_path = p / f"{filename}_t-ewe.{p.parent.name}"
+        plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
 
     return None
 
@@ -410,12 +409,11 @@ def plot_x_voltage_cycles_cbar(filename, d, d_plot, plot_paths, save=True):
     cbar.ax.set_yticklabels(["end", "start"])
     cbar.ax.tick_params(axis="y")
     plt.subplots_adjust(wspace=0.05)
-    if save:
-        for p in plot_paths:
-            print(f"\t\t\t{p.parent.name}")
-            output_path = p / f"{filename}_x-ewe.{p.parent.name}"
-            plt.savefig(output_path, bbox_inches="tight")
-        plt.close()
+    for p in plot_paths:
+        print(f"\t\t\t{p.parent.name}")
+        output_path = p / f"{filename}_x-ewe.{p.parent.name}"
+        plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
 
     return None
 
@@ -476,6 +474,7 @@ def plot_x_voltage_cycles_legend(filename, d, d_plot, plot_paths):
         print(f"\t\t\t{p.parent.name}")
         output_path = p / f"{filename}_x-ewe.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
 
     return None
 
@@ -524,6 +523,7 @@ def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
         print(f"\t\t\t{p.parent.name}")
         output_path = p / f"{filename}_cap-ewe.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
 
     return None
 
@@ -555,6 +555,7 @@ def plot_capacity_voltage_legend(filename, d, d_plot, plot_paths):
         print(f"\t\t\t{p.parent.name}")
         output_path = p / f"{filename}_cap-ewe.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
 
     return None
 
@@ -590,6 +591,7 @@ def plot_cycle_capacity(filename, d, d_plot, plot_paths):
         print(f"\t\t\t{p.parent.name}")
         output_path = p / f"{filename}_cycle-cap.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
 
     return None
 
@@ -612,6 +614,7 @@ def plot_cycle_ce(filename, d, d_plot, plot_paths):
         print(f"\t\t\t{p.parent.name}")
         output_path = p / f"{filename}_cycle-ce.{p.parent.name}"
         plt.savefig(output_path, bbox_inches="tight")
+    plt.close()
 
     return None
 

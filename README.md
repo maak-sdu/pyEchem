@@ -45,4 +45,5 @@ the `pyEchem` code will be installed.
   pip install -r requirements/pip_requirements.txt
   ```
 Now, all `pyEchem` dependencies are installed for the `pyechem` conda
-environment.
+environment. You are now ready to run the code present in the `pyEchem`
+repository.

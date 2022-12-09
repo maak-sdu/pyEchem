@@ -56,7 +56,7 @@ D_RGB = dict(red=(255, 0, 0),
 # Matplotlib colormaps
 CMAPS = sorted([e for e in plt.colormaps()], key=str.lower)
 
-# Indices used for data extraction
+# Indices used for MTI data extraction
 D_INDICES = dict(voltage_index = 2,
                  current_index = 3,
                  capacity_index = 5,
@@ -64,13 +64,12 @@ D_INDICES = dict(voltage_index = 2,
                  time_index = -1,
                  )
 
+# Biologic data headers
 D_HEADER_BIOLOGIC = dict(time="time/s",
                          voltage="Ewe/V",
                          current="<I>/mA",
                          x="x",
                          capacity="Capacity/mA.h",
-                         # capacity_discharge="Q discharge/mA.h",
-                         # capacity_charge="Q charge/mA.h",
                         )
 # End of input section
 

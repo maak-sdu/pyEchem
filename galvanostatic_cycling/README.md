@@ -56,7 +56,7 @@ for calculation, while other information is meant for plotting aspects. The user
 will have to prompt information for each `.txt` file in the `data` directory.
 Please see the examples below.
 
-## Example
+## Examples
 Within the `example` folder found in this GitHub repository, a `data` folder
 containing an example `.txt` file can be found. In addition to the `data`
 folder, a `mti_extract_write_plot.py` file can be found.

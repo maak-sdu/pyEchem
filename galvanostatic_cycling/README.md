@@ -34,9 +34,9 @@ All plots will be saved to `png`, `pdf`, and `svg` files.
 
 ## Running the program
 Having all dependencies installed in the `pyechem` conda environment and having
-it activated, the user will be able to run the `mti_extract_write_plot.py` file:
+it activated, the user will be able to run the `galvanostatic_cycling.py` file:
 ```shell
-python mti_extract_write_plot.py
+python galvanostatic_cycling.py
 ```
 
 Alternatively, the program can be run as an iPython notebook, `.ipynb` file.
@@ -45,6 +45,8 @@ To run the `.ipynb` file, initiate a Jupyter Notebook or Jupyter Lab session:
 jupyter notebook
 ```
 
+or
+
 ```shell
 jupyter-lab
 ```
@@ -52,6 +54,7 @@ jupyter-lab
 The user will have to prompt a series of information. Some information is meant
 for calculation, while other information is meant for plotting aspects. The user
 will have to prompt information for each `.txt` file in the `data` directory.
+Please see the examples below.
 
 ## Example
 Within the `example` folder found in this GitHub repository, a `data` folder

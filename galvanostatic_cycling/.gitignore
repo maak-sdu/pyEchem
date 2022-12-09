@@ -1,8 +1,8 @@
 # galvanostatic_cyclcing
+.ipynb_checkpoints
 examples/data_comma-to-dot
 examples/data_no-header
 examples/pdf
 examples/png
 examples/svg
 examples/txt
-.ipynb_checkpoints

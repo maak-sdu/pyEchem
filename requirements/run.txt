@@ -4,4 +4,5 @@ scipy
 matplotlib-base
 bg-mpl-stylesheets
 quantities
+diffpy.utils
 jupyterlab

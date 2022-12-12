@@ -10,7 +10,7 @@ from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 from matplotlib.cm import get_cmap
 from bg_mpl_stylesheet.bg_mpl_stylesheet import bg_mpl_style
 import quantities
-from molmass import Formula
+import molmass
 
 # Input section
 
@@ -71,6 +71,17 @@ D_HEADER_BIOLOGIC = dict(time="time/s",
                          x="x",
                          capacity="Capacity/mA.h",
                         )
+
+# Potentiostat dictionary
+D_POTENTIOSTATS = {"0": "Biologic", "1": "MTI"}
+
+# Plot mode dictionary
+D_PLOT_MODES = {"0": "Colorbar", "1": "Legend"}
+
+# Colormap dictionary
+D_CMAPS = {"0": "User-defined (from black to user-defined color)",
+           "1": "Matplotlib colormap",}
+
 # End of input section
 
 
@@ -105,12 +116,13 @@ def biologic_extract(file, d_keys):
         try:
             d[k] = df[d_keys[k]].to_numpy()
         except KeyError:
-            print(f"{80*'-'}\nThe key '{d_keys[k]}' was missing from\n\t"
-                 f"{file.name}\nPlease re-export the Biologic data with the "
-                 f"following keys (and data) present:")
+            print(f"\t{72*'*'}\n\tKeyError\n\tThe key '{d_keys[k]}' was "
+                 f"missing from\n\t\t{file.name}\n\tPlease re-export the "
+                 f"Biologic data with the following keys (and data)\n\t"
+                 f"present:")
             for key in keys:
-                print(f"\t{d_keys[key]}")
-            print(f"\nSkipping this file.")
+                print(f"\t\t{d_keys[key]}")
+            print(f"\t{72*'*'}\nSkipping this file.")
 
             return None
 
@@ -241,7 +253,7 @@ def molar_mass_calc(formula):
             s.append(1)
         if s[-1] == "":
             s = s[0:-1]
-        f = Formula(s[0])
+        f = molmass.Formula(s[0])
         m = float(s[1]) * f.mass
         molar_mass += m
 
@@ -275,12 +287,29 @@ def x_calc(d, mass, molar_mass, x_start, working_ion_valence):
         delta_q =  current[i] * (time[i] - time[i-1]) / working_ion_valence
         delta_x = - delta_q / (n * f)
         x.append(x[i-1] + delta_x)
-    change_indices = [i for i in range(1, len(current))
-                      if current[i] != 0
-                      and current[i] * current[i-1] <= 0]
-    x, change_indices = np.array(x), np.array(change_indices)
+    x = np.array(x)
 
-    return x, change_indices
+    return x
+
+
+def half_cycles_start(d):
+    time, current = d["time"], d["current"]
+    half_cycles_start = np.array([i for i in range(1, len(current))
+                                  if current[i] != 0
+                                  and current[i] * current[i-1] <= 0
+                                  ])
+
+    return half_cycles_start
+
+
+def half_cycles_end(d):
+    time, current = d["time"], d["current"]
+    half_cycles_end = np.array([i for i in range(1, len(current))
+                                if current[i-1] != 0
+                                and current[-1] * current[i] <= 0
+                                ])
+
+    return half_cycles_end
 
 
 def extract_cycles(d):
@@ -332,12 +361,12 @@ def extract_half_cycles(d):
     for i in range(1, len(current)):
         if current[i-1] != 0 and current[i] == 0:
             current_end_indices.append(i)
-    d_half_cycles = {"0": dict(time=time[0:current_end_indices[0]],
-                               voltage=voltage[0:current_end_indices[0]],
-                               current=current[0:current_end_indices[0]],
-                               capacity=capacity[0:current_end_indices[0]],
-                               x=x[0:current_end_indices[0]],
-                               )
+    d_half_cycles = {0: dict(time=time[0:current_end_indices[0]],
+                             voltage=voltage[0:current_end_indices[0]],
+                             current=current[0:current_end_indices[0]],
+                             capacity=capacity[0:current_end_indices[0]],
+                             x=x[0:current_end_indices[0]],
+                             )
                     }
     for i in range(len(current_end_indices)-1):
         d_half_cycles[i+1] = dict(time=time[current_end_indices[i]:
@@ -356,14 +385,35 @@ def extract_half_cycles(d):
                                       current_end_indices[i+1]
                                       ],
                                   )
-    d_half_cycles[i+2] = dict(time=time[current_end_indices[i+1]:],
-                              voltage=voltage[current_end_indices[i+1]:],
-                              current=current[current_end_indices[i+1]:],
-                              capacity=capacity[current_end_indices[i+1]:],
-                              x=x[current_end_indices[i+1]:],
-                              )
+    if not np.all(current[current_end_indices[i+1]:] == 0):
+        d_half_cycles[i+2] = dict(time=time[current_end_indices[i+1]:],
+                                  voltage=voltage[current_end_indices[i+1]:],
+                                  current=current[current_end_indices[i+1]:],
+                                  capacity=capacity[current_end_indices[i+1]:],
+                                  x=x[current_end_indices[i+1]:],
+                                  )
 
     return d_half_cycles
+
+
+def merge_half_cycles_to_cycles(d):
+    half_cycles = list(d.keys())
+    keys = list(d[half_cycles[0]].keys())
+    d_cycles = {}
+    counter = 0
+    for i in range(len(half_cycles)):
+        if i % 2 == 0:
+            d_cycles[counter] = {}
+            for k in keys:
+                d_cycles[counter][k] = d[half_cycles[i]][k]
+        else:
+            for k in keys:
+                d_cycles[counter][k] = np.append(d_cycles[counter][k],
+                                                 d[half_cycles[i]][k],
+                                                 )
+            counter += 1
+
+    return d_cycles
 
 
 def write(d, output_path):
@@ -371,7 +421,10 @@ def write(d, output_path):
     header = f"t [s]\tV [V]\tI [A]\tQ [mAh/g]\tx"
     array = d[keys[0]]
     for i in range(1, len(keys)):
-        if not keys[i] in ["change_indices", "time_cycle_start"]:
+        if not keys[i] in ["half_cycles_start",
+                           "half_cycles_end",
+                           "time_cycle_start",
+                           ]:
             array = np.column_stack((array, d[keys[i]]))
     np.savetxt(output_path,
                array,
@@ -472,8 +525,9 @@ def plot_x_voltage(filename, d_data, d_plot, plot_paths):
 
 
 def plot_x_voltage_cycles_cbar(filename, d, d_plot, plot_paths, save=True):
-    cycles = list(d.keys())
-    colors = d_plot["colors"](np.linspace(0, 1, len(cycles)))
+    half_cycles = list(d.keys())
+    n_cycles = int(np.ceil(len(half_cycles) / 2))
+    colors = d_plot["colors"](np.linspace(0, 1, n_cycles))
     plt.style.use(bg_mpl_style)
     fig, axs = plt.subplots(dpi=d_plot["dpi"],
                             figsize=d_plot["figsize"],
@@ -481,11 +535,17 @@ def plot_x_voltage_cycles_cbar(filename, d, d_plot, plot_paths, save=True):
                             gridspec_kw=dict(width_ratios=[1, 0.01]),
                             )
     xmin, xmax = [], []
-    for i in range(len(cycles)):
-        x, voltage = d[cycles[i]]["x"], d[cycles[i]]["voltage"]
-        axs[0].plot(x, voltage, label=str(i+1), c=colors[i])
+    counter = 0
+    for i in range(len(half_cycles)):
+        x, voltage = d[half_cycles[i]]["x"], d[half_cycles[i]]["voltage"]
         xmin.append(np.amin(x))
         xmax.append(np.amax(x))
+        if i % 2 == 0:
+            counter += 1
+            label = str(counter)
+        else:
+            label = None
+        axs[0].plot(x, voltage, label=label, c=colors[counter-1])
     xmin, xmax = np.amin(np.array(xmin)), np.amax(np.array(xmax))
     xrange = xmax - xmin
     axs[0].set_xlabel(d_plot["x_label"],
@@ -517,18 +577,25 @@ def plot_x_voltage_cycles_cbar(filename, d, d_plot, plot_paths, save=True):
 
 
 def plot_x_voltage_cycles_legend(filename, d, d_plot, plot_paths):
-    cycles = list(d.keys())
-    colors = d_plot["colors"](np.linspace(0, 1, len(cycles)))
+    half_cycles = list(d.keys())
+    n_cycles = int(np.ceil(len(half_cycles) / 2))
+    colors = d_plot["colors"](np.linspace(0, 1, n_cycles))
     plt.style.use(bg_mpl_style)
     fig, ax = plt.subplots(dpi=d_plot["dpi"],
                             figsize=d_plot["figsize"],
                             )
     xmin, xmax = [], []
-    for i in range(len(cycles)):
-        x, voltage = d[cycles[i]]["x"], d[cycles[i]]["voltage"]
-        ax.plot(x, voltage, label=str(i+1), c=colors[i])
+    counter = 0
+    for i in range(len(half_cycles)):
+        x, voltage = d[half_cycles[i]]["x"], d[half_cycles[i]]["voltage"]
         xmin.append(np.amin(x))
         xmax.append(np.amax(x))
+        if i % 2 == 0:
+            counter += 1
+            label = str(counter)
+        else:
+            label = None
+        ax.plot(x, voltage, label=label, c=colors[counter-1])
     xmin, xmax = np.amin(np.array(xmin)), np.amax(np.array(xmax))
     xrange = xmax - xmin
     ax.set_xlabel(d_plot["x_label"], fontsize=d_plot["fontsize_labels"])
@@ -536,18 +603,18 @@ def plot_x_voltage_cycles_legend(filename, d, d_plot, plot_paths):
     ax.tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
     ax.minorticks_on()
     ax.set_xlim(xmin - 0.01 * xrange, xmax + 0.01 * xrange)
-    if len(cycles) <= 7:
-        ncols = len(cycles)
+    if np.ceil(len(half_cycles) / 2) <= 7:
+        ncols = int(np.ceil(len(half_cycles) / 2))
         offset = 0.15
     else:
         ncols = 8
-        if 1 < len(cycles) / ncols <= 2:
+        if 1 < (len(half_cycles) / 2) / ncols <= 2:
             offset = 0.25
-        elif 2 < len(cycles) / ncols <= 3:
+        elif 2 < (len(half_cycles) / 2) / ncols <= 3:
             offset = 0.375
-        elif 3 < len(cycles) / ncols <= 4:
+        elif 3 < (len(half_cycles) / 2) / ncols <= 4:
             offset = 0.45
-        elif 4 < len(cycles) / ncols <= 5:
+        elif 4 < (len(half_cycles) / 2) / ncols <= 5:
             offset = 0.55
         else:
             print(f"\t\t\tToo many cycles to get right offset for legend.\n"
@@ -579,10 +646,7 @@ def plot_x_voltage_cycles_legend(filename, d, d_plot, plot_paths):
 
 def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
     half_cycles = list(d.keys())
-    if len(half_cycles) % 2 != 0:
-        n_cycles = int((len(half_cycles) + 1) / 2)
-    else:
-        n_cycles = int(len(half_cycles) / 2)
+    n_cycles = int(np.ceil(len(half_cycles) / 2))
     plt.style.use(bg_mpl_style)
     colors = d_plot["colors"](np.linspace(0, 1, n_cycles))
     fig, axs = plt.subplots(dpi=d_plot["dpi"],
@@ -595,11 +659,14 @@ def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
     for i in range(len(half_cycles)):
         capacity = d[half_cycles[i]]["capacity"]
         voltage = d[half_cycles[i]]["voltage"]
-        axs[0].plot(capacity, voltage, label=str(counter), c=colors[counter])
         xmin.append(np.amin(capacity))
         xmax.append(np.amax(capacity))
-        if i % 2 != 0:
+        if i % 2 == 0:
             counter += 1
+            label = str(counter)
+        else:
+            label = None
+        axs[0].plot(capacity, voltage, label=label, c=colors[counter-1])
     axs[0].set_xlabel(d_plot["cap_std_label"], fontsize=d_plot["fontsize_labels"])
     axs[0].set_ylabel(d_plot["ewe_label"], fontsize=d_plot["fontsize_labels"])
     axs[0].tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
@@ -628,20 +695,24 @@ def plot_capacity_voltage_cbar(filename, d, d_plot, plot_paths):
 
 def plot_capacity_voltage_legend(filename, d, d_plot, plot_paths):
     half_cycles = list(d.keys())
+    n_cycles = int(np.ceil(len(half_cycles) / 2))
     plt.style.use(bg_mpl_style)
     colors = d_plot["colors"]
-    colors = colors(np.linspace(0, 1, int((len(half_cycles) / 2) + 2)))
+    colors = colors(np.linspace(0, 1, n_cycles))
     fig, ax = plt.subplots(dpi=d_plot["dpi"], figsize=d_plot["figsize"])
-    xmax = []
+    xmin, xmax = [], []
     counter = 0
     for i in range(len(half_cycles)):
         capacity = d[half_cycles[i]]["capacity"]
         voltage = d[half_cycles[i]]["voltage"]
-        ax.plot(capacity, voltage, label=str(counter), c=colors[counter])
         xmin.append(np.amin(capacity))
         xmax.append(np.amax(capacity))
-        if i % 2 != 0:
+        if i % 2 == 0:
             counter += 1
+            label = str(counter)
+        else:
+            label = None
+        ax.plot(capacity, voltage, label=label, c=colors[counter-1])
     ax.set_xlabel(d_plot["cap_std_label"], fontsize=d_plot["fontsize_labels"])
     ax.set_ylabel(d_plot["ewe_label"], fontsize=d_plot["fontsize_labels"])
     ax.tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])
@@ -649,6 +720,38 @@ def plot_capacity_voltage_legend(filename, d, d_plot, plot_paths):
     xmin, xmax = np.amin(np.array(xmin)), np.amax(np.array(xmax))
     xrange = xmax - xmin
     ax.set_xlim(xmin - (0.01 * xrange), xmax + (0.01 * xrange))
+    if np.ceil(len(half_cycles) / 2) <= 7:
+        ncols = int(np.ceil(len(half_cycles) / 2))
+        offset = 0.15
+    else:
+        ncols = 8
+        if 1 < (len(half_cycles) / 2) / ncols <= 2:
+            offset = 0.25
+        elif 2 < (len(half_cycles) / 2) / ncols <= 3:
+            offset = 0.375
+        elif 3 < (len(half_cycles) / 2) / ncols <= 4:
+            offset = 0.45
+        elif 4 < (len(half_cycles) / 2) / ncols <= 5:
+            offset = 0.55
+        else:
+            print(f"\t\t\tToo many cycles to get right offset for legend.\n"
+                  f"\t\t\tSetting legend offset to 0.\n\t\t\tPlease "
+                  f"consider using a colorbar instead of a legend.\n")
+            offset = 0
+    handles, labels = ax.get_legend_handles_labels()
+    handles_sorted, labels_sorted = [], []
+    for i in range(ncols):
+        for j in range(len(labels)):
+            if (int(labels[j]) + ncols - 1) % ncols == i:
+                handles_sorted.append(handles[j])
+                labels_sorted.append(labels[j])
+    ax.legend(handles=handles_sorted,
+              labels=labels_sorted,
+              loc="upper center",
+              bbox_to_anchor=(0.5, 1 + offset),
+              ncols=ncols,
+              framealpha=0,
+              )
     for p in plot_paths:
         print(f"\t\t\t{p.parent.name}")
         output_path = p / f"{filename}_cap-ewe.{p.parent.name}"
@@ -746,81 +849,170 @@ def main():
         if not p.exists():
             p.mkdir()
     output_paths = [txt_path, png_path, pdf_path, svg_path,]
-    for f in data_files:
+    cont_program = True
+    while cont_program:
+        print(f"{80*'-'}\nAvailable datafiles...\n\t{72*'='}")
+        for i,f in enumerate(data_files):
+            print(f"\t{i}\t{f.name}")
+        print(f"\t{72*'='}\n\tq\tquit")
+        file_not_found = True
+        while file_not_found:
+            f_index = input(f"\nPlease provide the index of the data file that "
+                            f"the user wish to process or 'q'\nif the user "
+                            f"wish to quit the program: ")
+            if f_index.lower() == "q":
+                cont_program = False
+                sys.exit(f"{80*'-'}\nThe program has been quit upon user "
+                         f"request.")
+            elif int(f_index) in range(len(data_files)):
+                f = data_files[int(f_index)]
+                file_not_found = False
+            else:
+                print(f"\n{80*'*'}\nIndex not found. Please try again."
+                      f"\n{80*'*'}")
         print(f"{80*'-'}\nWorking w. file: {f.name}.")
-
         for p in output_paths:
             if not (p / f.stem).exists():
                 (p / f.stem).mkdir()
         txt_path_sample, png_path_sample = txt_path / f.stem, png_path / f.stem
         pdf_path_sample, svg_path_sample = pdf_path / f.stem, svg_path / f.stem
-        gc_type = input(f"\n\tAvailable potentiostats:\n\t\t0\tBiologic\n\t\t1"
-                        f"\tMTI\n\tPlease provide the index of the "
-                        f"potentiostat used to collect the GC\n\tdata: ")
+        potentiostat_keys = list(D_POTENTIOSTATS.keys())
+        potentiostat_not_found = True
+        while potentiostat_not_found:
+            print(f"\n\tAvailable potentiostats:")
+            for k,v in D_POTENTIOSTATS.items():
+                print(f"\t{k}\t{v}")
+            gc_type = input(f"\n\tPlease provide the index of the potentiostat "
+                            f"used to collect the GC\n\tdata: ")
+            if gc_type not in potentiostat_keys:
+                print(f"\n\t{72*'*'}\n\tIndex not found. Please try again.\n\t"
+                      f"{72*'*'}")
+            else:
+                potentiostat_not_found = False
         if gc_type == "0":
             print(f"\n\tConverting commas to dots...")
             f = comma_to_dot(f, data_ctd_path)
             header_check = biologic_header_check(f)
             if header_check:
                 f, mass = biologic_remove_header_get_mass(f, data_nh_path)
-            else:
-                d_data = biologic_extract(f, D_HEADER_BIOLOGIC)
-                if isinstance(d_data, type(None)):
-                    continue
-                d_data["capacity"] = biologic_zero_capacity_if_resting(d_data)
-                mass = float(input(f"\tDone extracting data.\n\n\tPlease "
-                                   f"provide the mass of the active electrode "
-                                   f"material (in mg): "
-                                   )
-                             ) * 10**-3
+                print(f"\n\tThe following characteristic mass was read from "
+                      f"the header of the\n\tfile: {mass} mg")
+                mass = mass * 10**-3
+            d_data = biologic_extract(f, D_HEADER_BIOLOGIC)
+            if isinstance(d_data, type(None)):
+                continue
+            d_data["capacity"] = biologic_zero_capacity_if_resting(d_data)
+            print("\tDone extracting data.")
+            if not header_check:
+                mass_not_found = True
+                while mass_not_found:
+                    try:
+                        mass = float(input(f"\n\tPlease provide the mass of "
+                                           f"the active electrode material "
+                                           f"(in mg): "
+                                           )) * 10**-3
+                        mass_not_found = False
+                    except ValueError:
+                        print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n"
+                              f"{72*'*'}")
         elif gc_type == "1":
             print(f"\n\tExtracting data...")
             d_data = mti_extract(f, D_INDICES)
-            mass = float(input(f"\tDone extracting data.\n\n\tPlease "
-                               f"provide the mass of the active electrode "
-                               f"material (in mg): "
-                               )
-                         ) * 10**-3
-        formula = input(f"\n\tPlease provide the empirical formula, e.g. "
-                        f"LiFePO4, of the active\n\telectrode material: "
-                        )
-        molar_mass = molar_mass_calc(formula)
+            print("\tDone extracting data.")
+            mass_not_found = True
+            while mass_not_found:
+                try:
+                    mass = float(input(f"\n\tPlease provide the mass of the "
+                                       f"active electrode material (in mg): "
+                                       )) * 10**-3
+                    mass_not_found = False
+                except ValueError:
+                    print(f"\n\t{72*'*'}\nValueError. Please try again.\n\t"
+                          f"{72*'*'}")
+        formula_not_found = True
+        while formula_not_found:
+            try:
+                formula = input(f"\n\tPlease provide the empirical formula, "
+                                f"e.g. LiFePO4, of the active\n\telectrode "
+                                f"material: ")
+                molar_mass = molar_mass_calc(formula)
+                formula_not_found = False
+            except molmass.molmass.FormulaError:
+                print(f"\n\t{72*'*'}\n\tFormulaError. Please try again.\n\t"
+                      f"{72*'*'}")
         print(f"\n\tCalculated molar mass for {formula}: {molar_mass:.6f} "
               f"g/mol")
-        x_start = float(input(f"\n\tPlease provide the initial value for x, "
-                              f"i.e. initial working ion content\n\tof the "
-                              f"electrode, e.g. 1 for LiFePO4: "
-                              )
-                        )
-        print(f"\n\tWorking ions...")
+        x_start_not_found = True
+        while x_start_not_found:
+            try:
+                x_start = float(input(f"\n\tPlease provide the initial value "
+                                      f"for x, i.e. initial working ion "
+                                      f"content\n\tof the electrode, e.g. 1 "
+                                      f"for LiFePO4: "))
+                x_start_not_found = False
+            except ValueError:
+                print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n\t"
+                      f"{72*'*'}")
         wi_keys = list(D_WORKING_ION.keys())
-        for i,k in enumerate(wi_keys):
-            print(f"\t\t{i}\t{k}")
-        working_ion = wi_keys[int(input(f"\tPlease provide the index of the "
-                                        f"working ion: "))]
+        working_ion_not_found = True
+        while working_ion_not_found:
+            print(f"\n\tWorking ions...")
+            for i,k in enumerate(wi_keys):
+                print(f"\t\t{i}\t{k}")
+            try:
+                working_ion = wi_keys[int(input(f"\tPlease provide the index "
+                                                f"of the working ion: "))]
+                working_ion_not_found = False
+            except (IndexError, ValueError) as e:
+                print(f"\n\t{72*'*'}\n\t{type(e).__name__}. Please try"
+                      f"again.\n\t{72*'*'}")
         working_ion_valence = D_WORKING_ION[working_ion]
         D_PLOT["x_label"] = make_x_label(formula, working_ion)
         print(f"\n\tAvailable counter electrodes...")
         ce_keys = list(D_EWE_LABEL.keys())
-        for i,k in enumerate(ce_keys):
-            print(f"\t\t{i}\t{k}")
-        D_PLOT["ewe_label"] = D_EWE_LABEL[ce_keys[int(input(f"\tPlease provide "
-                                                            f"the index of the "
-                                                            f"counter "
-                                                            f"electrode: "))]]
-        print(f"\n\tColorbar or legend...\n\t\t0\tColorbar\n\t\t1\tLegend")
-        cbar_vs_legend = input(f"\tPlease indicate whether a colorbar or a "
-                               f"legend is preferred: ")
-        if cbar_vs_legend == "0":
-            D_PLOT["cbar_legend"] = "cbar"
-        else:
-            D_PLOT["cbar_legend"] = "legend"
-        print(f"\n\tColor types...\n\t\t0\tUser-defined sequential colormap "
-              f"\n\t\t1\tMatplotlib colormap")
-        cmap_type = input(f"\tPlease provide the index to indicate whether you "
-                          f"prefer a sequential\n\tcolormap using a "
-                          f"user-provided color or a Matplotlib colormap: ")
-        if not cmap_type == "1":
+        ce_not_found = True
+        while ce_not_found:
+            for i,k in enumerate(ce_keys):
+                print(f"\t\t{i}\t{k}")
+            try:
+                ewe_label = int(input(f"\tPlease provide the index of the "
+                                      f"counter electrode: "))
+                try:
+                    D_PLOT["ewe_label"] = D_EWE_LABEL[ce_keys[ewe_label]]
+                    ce_not_found = False
+                except IndexError as e:
+                    print(f"\n\t{72*'*'}\n\tIndexError. Please try again.\n\t"
+                          f"{72*'*'}")
+            except ValueError:
+                print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n\t"
+                      f"{72*'*'}")
+        print(f"\n\tColorbar or legend...")
+        plot_mode_not_found = True
+        while plot_mode_not_found:
+            for k,v in D_PLOT_MODES.items():
+                print(f"\t\t{k}\t{v}")
+            cbar_vs_legend = input(f"\tPlease indicate whether a colorbar or a "
+                                   f"legend is preferred: ")
+            if cbar_vs_legend in list(D_PLOT_MODES.keys()):
+                D_PLOT["cbar_vs_legend"] = D_PLOT_MODES[cbar_vs_legend]
+                plot_mode_not_found = False
+            else:
+                print(f"\n\t{72*'*'}\n\tIndexError. Please try again.\n\t"
+                      f"{72*'*'}")
+        color_type_not_found = True
+        print(f"\n\tColor types...")
+        while color_type_not_found:
+            for k,v in D_CMAPS.items():
+                print(f"\t\t{k}\t{v}")
+
+            cmap_type = input(f"\tPlease provide the index to indicate of"
+                              f"desired colormap: ")
+            if cmap_type in D_CMAPS.keys():
+                color_type_not_found = False
+            else:
+                print(f"\n\t{72*'*'}\n\tIndexError. Please try again.\n\t"
+                      f"{72*'*'}")
+        if cmap_type == "0":
             print(f"\n\tAvailable color schemes...")
             rgb_keys = list(D_RGB.keys())
             for i in range(len(rgb_keys)):
@@ -841,16 +1033,19 @@ def main():
                                              f"the desired colormap: "))]
             D_PLOT["colors"] = get_cmap(D_PLOT["cmap"])
             D_PLOT["cmap_type"] = "mpl"
-        print("\n\tCalculating x-values, i.e. state of charge...")
-        d_data["x"], d_data["change_indices"] = x_calc(d_data,
-                                                       mass,
-                                                       molar_mass,
-                                                       x_start,
-                                                       working_ion_valence,
-                                                       )
+        if not gc_type == "0":
+            print("\n\tCalculating x-values, i.e. state of charge...")
+            d_data["x"] = x_calc(d_data,
+                                 mass,
+                                 molar_mass,
+                                 x_start,
+                                 working_ion_valence,
+                                 )
+        d_data["half_cycles_start"] = half_cycles_start(d_data)
+        d_data["half_cycles_end"] = half_cycles_end(d_data)
         d_data["capacity"] = d_data["capacity"] / mass
-        d_cycles = extract_cycles(d_data)
         d_half_cycles = extract_half_cycles(d_data)
+        d_cycles = merge_half_cycles_to_cycles(d_half_cycles)
         d_caps = capacities_extract(d_half_cycles)
         print(f"\tDone calculating x-values.\n\n\tWriting extracted and "
               f"calculated data to '{txt_path_sample.name}' folder."
@@ -867,13 +1062,13 @@ def main():
         print(f"\t\tx vs. voltage...")
         if D_PLOT["cbar_legend"] == "cbar":
             plot_x_voltage_cycles_cbar(f.stem,
-                                       d_cycles,
+                                       d_half_cycles,
                                        D_PLOT,
                                        plot_paths_sample,
                                        )
         elif D_PLOT["cbar_legend"] == "legend":
             plot_x_voltage_cycles_legend(f.stem,
-                                         d_cycles,
+                                         d_half_cycles,
                                          D_PLOT,
                                          plot_paths_sample,
                                          )
@@ -900,7 +1095,6 @@ def main():
         plot_cycle_ce(f.stem, d_caps, D_PLOT, plot_paths_sample)
         print(f"\tDone plotting data.\n\tPlease see the {plot_folders} "
               f"folders.")
-    print(f"{80*'-'}\nDone working with files.")
 
     return None
 

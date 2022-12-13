@@ -70,7 +70,7 @@ D_HEADER_BIOLOGIC = dict(time="time/s",
                          current="<I>/mA",
                          x="x",
                          capacity="Capacity/mA.h",
-                        )
+                         )
 
 # Potentiostat dictionary
 D_POTENTIOSTATS = {"0": "Biologic", "1": "MTI"}
@@ -163,7 +163,6 @@ def biologic_merge_capacities(d):
 
 
 # MTI-specific functions
-
 def mti_extract(file, d_indices):
     with file.open(mode="r") as f:
         lines = f.readlines()
@@ -233,7 +232,6 @@ def mti_extract(file, d_indices):
 
 
 # General functions
-
 def comma_to_dot(file, output_path):
     with file.open(mode="r") as f:
         s = f.read().replace(",", ".")
@@ -864,7 +862,7 @@ def main():
                 cont_program = False
                 sys.exit(f"{80*'-'}\nThe program has been quit upon user "
                          f"request.")
-            elif int(f_index) in range(len(data_files)):
+            elif f_index in [str(e) for e in range(len(data_files))]:
                 f = data_files[int(f_index)]
                 file_not_found = False
             else:
@@ -914,7 +912,7 @@ def main():
                         mass_not_found = False
                     except ValueError:
                         print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n"
-                              f"{72*'*'}")
+                              f"\t{72*'*'}")
         elif gc_type == "1":
             print(f"\n\tExtracting data...")
             d_data = mti_extract(f, D_INDICES)
@@ -994,7 +992,7 @@ def main():
             cbar_vs_legend = input(f"\tPlease indicate whether a colorbar or a "
                                    f"legend is preferred: ")
             if cbar_vs_legend in list(D_PLOT_MODES.keys()):
-                D_PLOT["cbar_vs_legend"] = D_PLOT_MODES[cbar_vs_legend]
+                D_PLOT["cbar_legend"] = D_PLOT_MODES[cbar_vs_legend]
                 plot_mode_not_found = False
             else:
                 print(f"\n\t{72*'*'}\n\tIndexError. Please try again.\n\t"
@@ -1025,7 +1023,7 @@ def main():
                                (0.000, (0, 0, 0)),
                                (1.000, (rgb[0] / 255, rgb[1] / 255, rgb[2] / 255)),
                                ))
-        else:
+        elif cmap_type == "1":
             print(f"\n\tMatplotlib colormaps...")
             for i,e in enumerate(CMAPS):
                 print(f"\t\t{i}\t{e}")
@@ -1041,13 +1039,14 @@ def main():
                                  x_start,
                                  working_ion_valence,
                                  )
+            print(f"\tDone calculating x-values.")
         d_data["half_cycles_start"] = half_cycles_start(d_data)
         d_data["half_cycles_end"] = half_cycles_end(d_data)
         d_data["capacity"] = d_data["capacity"] / mass
         d_half_cycles = extract_half_cycles(d_data)
         d_cycles = merge_half_cycles_to_cycles(d_half_cycles)
         d_caps = capacities_extract(d_half_cycles)
-        print(f"\tDone calculating x-values.\n\n\tWriting extracted and "
+        print(f"\n\tWriting extracted and "
               f"calculated data to '{txt_path_sample.name}' folder."
               )
         write(d_data, txt_path / f.stem / f.name)
@@ -1060,37 +1059,33 @@ def main():
         print(f"\t\ttime vs. voltage...")
         plot_time_voltage(f.stem, d_data, D_PLOT, plot_paths_sample,)
         print(f"\t\tx vs. voltage...")
-        if D_PLOT["cbar_legend"] == "cbar":
+        if D_PLOT["cbar_legend"] == "Colorbar":
             plot_x_voltage_cycles_cbar(f.stem,
                                        d_half_cycles,
                                        D_PLOT,
                                        plot_paths_sample,
                                        )
-        elif D_PLOT["cbar_legend"] == "legend":
+        elif D_PLOT["cbar_legend"] == "Legend":
             plot_x_voltage_cycles_legend(f.stem,
                                          d_half_cycles,
                                          D_PLOT,
                                          plot_paths_sample,
                                          )
         print(f"\t\tcapacity vs. voltage...")
-        if D_PLOT["cbar_legend"] == "cbar":
+        if D_PLOT["cbar_legend"] == "Colorbar":
             plot_capacity_voltage_cbar(f.stem,
                                        d_half_cycles,
                                        D_PLOT,
                                        plot_paths_sample,
                                        )
-        elif D_PLOT["cbar_legend"] == "legend":
+        elif D_PLOT["cbar_legend"] == "Legend":
             plot_capacity_voltage_legend(f.stem,
                                          d_half_cycles,
                                          D_PLOT,
                                          plot_paths_sample,
                                          )
         print(f"\t\tcycle number vs. capacity...")
-        ax_cycles_cap = plot_cycle_capacity(f.stem,
-                                            d_caps,
-                                            D_PLOT,
-                                            plot_paths_sample,
-                                            )
+        plot_cycle_capacity(f.stem, d_caps, D_PLOT, plot_paths_sample,)
         print(f"\t\tcycle number vs. couloumbic efficiency...")
         plot_cycle_ce(f.stem, d_caps, D_PLOT, plot_paths_sample)
         print(f"\tDone plotting data.\n\tPlease see the {plot_folders} "

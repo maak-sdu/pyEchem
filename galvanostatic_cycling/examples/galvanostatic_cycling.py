@@ -803,8 +803,18 @@ def plot_cycle_ce(filename, d, d_plot, plot_paths):
     ax.scatter(range(1, len(ce) + 1), ce, color=colors[-2])
     xmin, xmax = 1, max(len(ce), len(ce))
     xrange = xmax - xmin
+    ymin, ymax = np.amin(ce), np.amax(ce)
+    ce_sorted = sorted(ce, reverse=True)
+    ce_max = [e for e in ce_sorted if e <= 1]
+    if len(ce_max) > 0:
+        ymax = ce_max[0]
+    else:
+        ymax = np.amax(ce)
+    if ymax > 1:
+        ymax = 1
+    yrange = ymax - ymin
     ax.set_xlim(xmin - 0.01 * xrange, xmax + 0.01 * xrange)
-    ax.set_ylim(0, 1.05)
+    ax.set_ylim(ymin - 0.05 * yrange, ymax + 0.05 * yrange)
     ax.set_xlabel(d_plot["cycle_std_label"], fontsize=d_plot["fontsize_labels"])
     ax.set_ylabel(d_plot["ce_std_label"], fontsize=d_plot["fontsize_labels"])
     ax.tick_params(axis="both", labelsize=d_plot["fontsize_ticks"])

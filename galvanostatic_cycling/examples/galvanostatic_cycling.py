@@ -1015,9 +1015,9 @@ def main():
             try:
                 x_molmass = float(input(f"\n\tPlease provide the value for x, "
                                         f"i.e. working ion content of the "
-                                        f"electrode\n\tto use for the molarmass "
-                                        f"when calculating gravimetric "
-                                        f"capacities: "))
+                                        f"electrode,\n\tto use for the "
+                                        f"molarmass when calculating "
+                                        f"gravimetric capacities: "))
                 x_molmass_not_found = False
             except ValueError:
                 print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n\t"

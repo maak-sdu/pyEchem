@@ -33,7 +33,7 @@ D_EWE_LABEL = dict(Li="$E_{\mathrm{we}}\;\mathrm{vs.\;Li/Li^{+}\;[V]}$",
                    NMC="$E_{\mathrm{we}}\;\mathrm{vs.\;NMC\;[V]}$",
                    LTO="$E_{\mathrm{we}}\;\mathrm{vs.\;Li_{4}Ti_{5}O_{12}\;"
                        "[V]}$",
-                   Other="$V\;[\mathrm{V}]$",
+                   Other="$E_{\mathrm{we}}\;[\mathrm{V}]$",
                    )
 
 # Working ion valences

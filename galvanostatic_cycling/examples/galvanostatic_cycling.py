@@ -263,14 +263,15 @@ def make_x_label(formula, working_ion):
     xlabel = "$x\;\mathrm{in\;"
     for i,e in enumerate(elements):
         s = re.split('(\d.*)', e)
-        if i == 0 and s[0] != working_ion:
-            xlabel += working_ion + "}_{x}\mathrm{" + s[0]
-        elif i == 0 and s[0] == working_ion:
-            xlabel += str(s[0]) + "}_{x}\mathrm{"
-        if i > 0:
+        if i == 0:
+            if s[0] != working_ion:
+                xlabel += working_ion + "}_{x}\mathrm{" + s[0]
+            else:
+                xlabel += str(s[0]) + "}_{x}\mathrm{"
+        else:
             xlabel += str(s[0])
-        if len(s) != 1:
-            xlabel += "_{" + str(s[1]) + "}"
+            if len(s) != 1:
+                xlabel += "_{" + str(s[1]) + "}"
     xlabel += "}$"
 
     return xlabel
@@ -1061,8 +1062,8 @@ def main():
               )
         write(d_data, txt_path / f.stem / f.name)
         cycles_write(d_cycles, txt_path_sample / f.name)
-        print(f"\tDone writing extracted and calculated data to "
-              f"'{txt_path.name}' folder.\n\n\tPlotting data..."
+        print(f"\tDone writing extracted and calculated data to\n\t\t"
+              f"'{txt_path.name}'\n\tfolder.\n\n\tPlotting data..."
               )
         plot_paths_sample = [png_path_sample, pdf_path_sample, svg_path_sample]
         plot_folders = [p.parent.name for p in plot_paths_sample]

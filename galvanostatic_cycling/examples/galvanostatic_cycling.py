@@ -242,20 +242,48 @@ def comma_to_dot(file, output_path):
     return output_path
 
 
-def molar_mass_calc(formula):
+def molar_mass_calc(formula, working_ion, x_start, x_molmass):
     elements = re.sub( r"([A-Z])", r" \1", formula).split()
-    molar_mass = 0
-    for e in elements:
+    molar_mass, formula = 0, ""
+    for i,e in enumerate(elements):
         s = re.split('(\d.*)', e)
         if len(s) == 1:
             s.append(1)
         if s[-1] == "":
             s = s[0:-1]
-        f = molmass.Formula(s[0])
-        m = float(s[1]) * f.mass
+        if i == 0:
+            if s[0] == working_ion:
+                if x_molmass != 0:
+                    f = molmass.Formula(working_ion)
+                    m = float(x_molmass) * f.mass
+                    if x_molmass != 1:
+                        formula += f"{working_ion}{x_molmass}"
+                    else:
+                        formula += working_ion
+            else:
+                if x_molmass != 0:
+                    f = molmass.Formula(working_ion)
+                    m = float(x_molmass) * f.mass
+                    if molmass != 1:
+                        formula += f"{working_ion}{x_molmass}"
+                    else:
+                        formula += working_ion
+                f = molmass.Formula(s[0])
+                m = m + (float(s[1]) * f.mass)
+                if s[1] != 1:
+                    formula += f"{s[0]}{s[1]}"
+                else:
+                    formula += s[0]
+        else:
+            f = molmass.Formula(s[0])
+            m = float(s[1]) * f.mass
+            if s[1] != 1:
+                formula += f"{s[0]}{s[1]}"
+            else:
+                formula += s[0]
         molar_mass += m
 
-    return molar_mass
+    return molar_mass, formula
 
 
 def make_x_label(formula, working_ion):
@@ -455,6 +483,15 @@ def cycles_write(d, output_path):
                    delimiter="\t",
                    encoding="utf8",
                    )
+
+    return None
+
+
+def formula_molarmass_write(formula, molmass, output_path):
+    s = f"formula: {formula}\nmolar mass: {molmass:.6f} g/mol"
+    output_path = output_path / "formula_molarmass.txt"
+    with output_path.open(mode="w") as o:
+        o.write(s)
 
     return None
 
@@ -938,30 +975,6 @@ def main():
                 except ValueError:
                     print(f"\n\t{72*'*'}\nValueError. Please try again.\n\t"
                           f"{72*'*'}")
-        formula_not_found = True
-        while formula_not_found:
-            try:
-                formula = input(f"\n\tPlease provide the empirical formula, "
-                                f"e.g. LiFePO4, of the active\n\telectrode "
-                                f"material: ")
-                molar_mass = molar_mass_calc(formula)
-                formula_not_found = False
-            except molmass.molmass.FormulaError:
-                print(f"\n\t{72*'*'}\n\tFormulaError. Please try again.\n\t"
-                      f"{72*'*'}")
-        print(f"\n\tCalculated molar mass for {formula}: {molar_mass:.6f} "
-              f"g/mol")
-        x_start_not_found = True
-        while x_start_not_found:
-            try:
-                x_start = float(input(f"\n\tPlease provide the initial value "
-                                      f"for x, i.e. initial working ion "
-                                      f"content\n\tof the electrode, e.g. 1 "
-                                      f"for LiFePO4: "))
-                x_start_not_found = False
-            except ValueError:
-                print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n\t"
-                      f"{72*'*'}")
         wi_keys = list(D_WORKING_ION.keys())
         working_ion_not_found = True
         while working_ion_not_found:
@@ -976,7 +989,47 @@ def main():
                 print(f"\n\t{72*'*'}\n\t{type(e).__name__}. Please try"
                       f"again.\n\t{72*'*'}")
         working_ion_valence = D_WORKING_ION[working_ion]
-        D_PLOT["x_label"] = make_x_label(formula, working_ion)
+        formula_not_found = True
+        while formula_not_found:
+            try:
+                formula = input(f"\n\tPlease provide the empirical formula, "
+                                f"e.g. LiFePO4, of the active\n\telectrode "
+                                f"material: ")
+                formula_not_found = False
+            except molmass.molmass.FormulaError:
+                print(f"\n\t{72*'*'}\n\tFormulaError. Please try again.\n\t"
+                      f"{72*'*'}")
+        x_start_not_found = True
+        while x_start_not_found:
+            try:
+                x_start = float(input(f"\n\tPlease provide the initial value "
+                                      f"for x, i.e. initial working ion "
+                                      f"content\n\tof the electrode, e.g. 1 "
+                                      f"for LiFePO4: "))
+                x_start_not_found = False
+            except ValueError:
+                print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n\t"
+                      f"{72*'*'}")
+        x_molmass_not_found = True
+        while x_molmass_not_found:
+            try:
+                x_molmass = float(input(f"\n\tPlease provide the value for x, "
+                                        f"i.e. working ion content of the "
+                                        f"electrode\n\tto use for the molarmass "
+                                        f"when calculating gravimetric "
+                                        f"capacities: "))
+                x_molmass_not_found = False
+            except ValueError:
+                print(f"\n\t{72*'*'}\n\tValueError. Please try again.\n\t"
+                      f"{72*'*'}")
+        molar_mass, molmass_formula = molar_mass_calc(formula,
+                                                      working_ion,
+                                                      x_start,
+                                                      x_molmass,
+                                                      )
+        print(f"\n\tCalculated molar mass for {molmass_formula}: "
+              f"{molar_mass:.6f} g/mol")
+        D_PLOT["x_label"] = make_x_label(molmass_formula, working_ion)
         print(f"\n\tAvailable counter electrodes...")
         ce_keys = list(D_EWE_LABEL.keys())
         ce_not_found = True
@@ -1062,6 +1115,7 @@ def main():
               )
         write(d_data, txt_path / f.stem / f.name)
         cycles_write(d_cycles, txt_path_sample / f.name)
+        formula_molarmass_write(molmass_formula, molar_mass, txt_path_sample)
         print(f"\tDone writing extracted and calculated data to\n\t\t"
               f"'{txt_path.name}'\n\tfolder.\n\n\tPlotting data..."
               )

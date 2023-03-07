@@ -11,6 +11,12 @@ from matplotlib.cm import get_cmap
 from bg_mpl_stylesheet.bg_mpl_stylesheet import bg_mpl_style
 import quantities
 import molmass
+import pathlib
+cwd = Path.cwd()
+if type(Path.cwd()) is pathlib.PosixPath:
+    import magic
+else:
+    from winmagic import magic
 
 # Input section
 
@@ -232,8 +238,8 @@ def mti_extract(file, d_indices):
 
 
 # General functions
-def comma_to_dot(file, output_path):
-    with file.open(mode="r") as f:
+def comma_to_dot(file, output_path, encoding):
+    with file.open(mode="r", encoding=encoding) as f:
         s = f.read().replace(",", ".")
     output_path = output_path / file.name
     with output_path.open(mode="w") as o:
@@ -260,6 +266,8 @@ def molar_mass_calc(formula, working_ion, x_start, x_molmass):
                         formula += f"{working_ion}{x_molmass}"
                     else:
                         formula += working_ion
+                else:
+                    m = 0
             else:
                 if x_molmass != 0:
                     f = molmass.Formula(working_ion)
@@ -920,6 +928,10 @@ def main():
         for p in output_paths:
             if not (p / f.stem).exists():
                 (p / f.stem).mkdir()
+        with f.open(mode="rb") as input_file:
+            byte = input_file.read()
+        m = magic.Magic(mime_encoding=True)
+        encoding = m.from_buffer(byte)
         txt_path_sample, png_path_sample = txt_path / f.stem, png_path / f.stem
         pdf_path_sample, svg_path_sample = pdf_path / f.stem, svg_path / f.stem
         potentiostat_keys = list(D_POTENTIOSTATS.keys())
@@ -937,7 +949,7 @@ def main():
                 potentiostat_not_found = False
         if gc_type == "0":
             print(f"\n\tConverting commas to dots...")
-            f = comma_to_dot(f, data_ctd_path)
+            f = comma_to_dot(f, data_ctd_path, encoding)
             header_check = biologic_header_check(f)
             if header_check:
                 f, mass = biologic_remove_header_get_mass(f, data_nh_path)

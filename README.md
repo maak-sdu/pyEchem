@@ -44,6 +44,14 @@ the `pyEchem` code will be installed.
   ```shell
   pip install -r requirements/pip_requirements.txt
   ```
+- If you are running on a Windows OS, run:
+  ```shell
+  pip install -r requirements/pip_windows.txt
+  ```
+- If you are running on a Unix OS (Mac OS or Linux), run:
+  ```shell
+  conda install -c conda-forge --file requirements/conda_unix.txt
+  ```
 Now, all `pyEchem` dependencies are installed for the `pyechem` conda
 environment. You are now ready to run the code present in the `pyEchem`
 repository.

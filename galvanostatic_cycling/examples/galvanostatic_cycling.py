@@ -260,6 +260,8 @@ def molar_mass_calc(formula, working_ion, x_start, x_molmass):
                         formula += f"{working_ion}{x_molmass}"
                     else:
                         formula += working_ion
+                else:
+                    m = 0
             else:
                 if x_molmass != 0:
                     f = molmass.Formula(working_ion)

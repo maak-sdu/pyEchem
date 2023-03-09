@@ -1037,10 +1037,20 @@ def main():
         molar_mass, molmass_formula = molar_mass_calc(formula,
                                                       working_ion,
                                                       x_start,
-                                                      x_molmass,
+                                                      x_molmass=x_start,
                                                       )
-        print(f"\n\tCalculated molar mass for {molmass_formula}: "
-              f"{molar_mass:.6f} g/mol")
+        print(f"\n\tCalculated molar mass for {molmass_formula}: {molar_mass:.6f} "
+              f"g/mol")
+        if x_start != x_molmass:
+            molar_mass_modified, molmass_formula_modified = molar_mass_calc(formula,
+                                                                            working_ion,
+                                                                            x_start,
+                                                                            x_molmass,
+                                                                            )
+            molmass_ratio = molar_mass / molar_mass_modified
+            print(f"\n\tCalculated molar mass for {molmass_formula_modified}: {molar_mass_modified:.6f} "
+                  f"g/mol")
+            print(f"\tMolar mass ratio: {molmass_ratio:.6f}")
         D_PLOT["x_label"] = make_x_label(molmass_formula, working_ion)
         print(f"\n\tAvailable counter electrodes...")
         ce_keys = list(D_EWE_LABEL.keys())
@@ -1118,7 +1128,7 @@ def main():
             print(f"\tDone calculating x-values.")
         d_data["half_cycles_start"] = half_cycles_start(d_data)
         d_data["half_cycles_end"] = half_cycles_end(d_data)
-        d_data["capacity"] = d_data["capacity"] / mass
+        d_data["capacity"] = d_data["capacity"] / (mass / molmass_ratio)
         d_half_cycles = extract_half_cycles(d_data)
         d_cycles = merge_half_cycles_to_cycles(d_half_cycles)
         d_caps = capacities_extract(d_half_cycles)

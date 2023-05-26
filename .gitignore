@@ -11,6 +11,9 @@ galvanostatic_cycling/examples/txt
 # maccor_aps_extractor
 maccor_aps_extractor/example/txt
 
+# mti_extractor
+mti_extractor/example/txt
+
 # x_soc_calculator
 x_soc_calculator/example/pdf
 x_soc_calculator/example/png

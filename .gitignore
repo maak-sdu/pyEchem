@@ -1,1 +1,14 @@
-dev/
+# galvanostatic_cyclcing
+galvanostatic_cycling/examples/.ipynb_checkpoints
+galvanostatic_cycling/examples/gitattributes
+galvanostatic_cycling/examples/data_comma-to-dot
+galvanostatic_cycling/examples/data_no-header
+galvanostatic_cycling/examples/pdf
+galvanostatic_cycling/examples/png
+galvanostatic_cycling/examples/svg
+galvanostatic_cycling/examples/txt
+
+# x_soc_calculator
+x_soc_calculator/example/pdf
+x_soc_calculator/example/png
+x_soc_calculator/example/svg

@@ -1,6 +1,9 @@
 # biologic_extractor
 biologic_extractor/example/txt
 
+# ec-lab_txt_merge
+ec-lab_txt_merge/txt_output
+
 # galvanostatic_cyclcing
 galvanostatic_cycling/examples/.ipynb_checkpoints
 galvanostatic_cycling/examples/gitattributes

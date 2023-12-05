@@ -1,6 +1,12 @@
 # biologic_extractor
 biologic_extractor/example/txt
 
+# ec-lab_txt_extract_capacities
+ec-lab_txt_extract_capacities/pdf
+ec-lab_txt_extract_capacities/png
+ec-lab_txt_extract_capacities/svg
+ec-lab_txt_extract_capacities/txt_output
+
 # ec-lab_txt_merge
 ec-lab_txt_merge/txt_output
 
